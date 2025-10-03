@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>بوت كوكب</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+--primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #818cf8;
+--secondary: #f59e0b; --success: #10b981; --danger: #ef4444;
+--userBg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+--botBg: #ffffff; --bg-main: #f8fafc;
+--shadow: 0 20px 60px rgba(0,0,0,.12);
+--shadow-lg: 0 25px 80px rgba(0,0,0,.18);
+}
+html, body { height: 100%; margin: 0; font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); overflow: hidden; }
+.container { display: flex; justify-content: center; align-items: center; height: 100%; padding: 20px; }
+.card { display: flex; flex-direction: column; width: 100%; max-width: 420px; height: 90vh; max-height: 700px; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-lg); background: #ffffff; animation: slideUp 0.5s ease-out; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+.hdr { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: #fff; padding: 24px 20px; text-align: center; position: relative; overflow: hidden; }
+.hdr::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); animation: pulse 3s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 0.8; } }
+.hdr-content { position: relative; z-index: 1; }
+.hdr-icon { font-size: 42px; margin-bottom: 8px; display: block; animation: bounce 2s ease-in-out infinite; }
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.hdr-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.hdr-subtitle { font-size: 13px; opacity: 0.9; font-weight: 400; }
+.area { flex: 1; padding: 20px; overflow-y: auto; overflow-x: hidden; background: var(--bg-main); position: relative; }
+.area::-webkit-scrollbar { width: 6px; }
+.area::-webkit-scrollbar-track { background: transparent; }
+.area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.area::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.msg { margin: 16px 0; display: flex; animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.user { justify-content: flex-start; }
+.bot { justify-content: flex-end; }
+.bubble { max-width: 80%; padding: 12px 16px; border-radius: 18px; line-height: 1.5; font-size: 14px; position: relative; word-wrap: break-word; }
+.bubble-user { background: var(--userBg); color: #ffffff; border-bottom-left-radius: 4px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); }
+.bubble-bot { background: var(--botBg); color: #1e293b; border-bottom-right-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+.bubble b { display: block; margin-bottom: 6px; font-size: 12px; opacity: 0.8; }
+.bubble-user b { color: rgba(255,255,255,0.9); }
+.bubble-bot b { color: var(--primary); }
+.status { background: linear-gradient(135deg, #fbbf24 0%, var(--secondary) 100%); color: #ffffff; padding: 12px 20px; text-align: center; font-size: 13px; font-weight: 600; display: none; animation: slideDown 0.3s ease-out; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+.controls { display: flex; gap: 10px; padding: 20px; background: #ffffff; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 12px rgba(0,0,0,0.04); }
+input[type="text"] { flex: 1; padding: 14px 18px; border-radius: 24px; border: 2px solid #e2e8f0; font-size: 14px; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; background: var(--bg-main); }
+input[type="text"]:focus { outline: none; border-color: var(--primary); background: #ffffff; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+input[type="text"]::placeholder { color: #94a3b8; }
+button { padding: 14px 24px; border-radius: 24px; border: none; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: #fff; cursor: pointer; font-weight: 600; font-size: 14px; font-family: 'Cairo', sans-serif; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); }
+button:active:not(:disabled) { transform: translateY(0); }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.typing-indicator { display: flex; gap: 4px; padding: 8px; }
+.typing-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: typing 1.4s infinite; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing { 0%, 60%, 100% { transform: translateY(0); opacity: 0.7; } 30% { transform: translateY(-10px); opacity: 1; } }
+.welcome-msg { text-align: center; padding: 40px 20px; color: #64748b; }
+.welcome-msg h2 { color: var(--primary); margin-bottom: 12px; font-size: 20px; }
+.welcome-msg p { font-size: 14px; line-height: 1.6; }
+@media (max-width: 480px) { .card { height: 100vh; max-height: 100vh; border-radius: 0; } .container { padding: 0; } }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="card">
+<div class="hdr">
+<div class="hdr-content">
+<span class="hdr-icon">🤖</span>
+<div class="hdr-title">بوت كوكب</div>
+<div class="hdr-subtitle">خدمة العملاء الذكية</div>
+</div>
+</div>
+<div id="area" class="area">
+<div class="welcome-msg">
+<h2>مرحباً بك في خدمة عملاء كوكب! 👋</h2>
+<p>أنا هنا لمساعدتك في الحصول على أفضل العروض والخصومات.<br>ابدأ المحادثة الآن!</p>
+</div>
+</div>
+<div id="status" class="status"></div>
+<div class="controls">
+<input id="inp" type="text" placeholder="اكتب رسالتك هنا..." autocomplete="off" />
+<button id="btn" type="button">إرسال</button>
+</div>
+</div>
+</div>
+<script>
+(function() {
+const WORKER_URL = "https://kawkab.kawkab-arabia.workers.dev/";
+const USE_DEMO_MODE = true;
+const area = document.getElementById("area");
+const inp = document.getElementById("inp");
+const btn = document.getElementById("btn");
+const statusEl = document.getElementById("status");
+let historyMessages = [];
+let timerStarted = false;
+let timeLeft = 60;
+let countdownId = null;
+let finalized = false;
+let lastOfferPercent = null;
+let currentOfferPercent = 10;
+
+function append(who, text) {
+const welcomeMsg = area.querySelector('.welcome-msg');
+if (welcomeMsg) welcomeMsg.remove();
+const msgDiv = document.createElement("div");
+msgDiv.className = "msg " + (who === "user" ? "user" : "bot");
+const bubble = document.createElement("div");
+bubble.className = "bubble bubble-" + who;
+bubble.innerHTML = "<b>" + (who === "user" ? "أنت" : "كوكب") + "</b>" + text;
+msgDiv.appendChild(bubble);
+area.appendChild(msgDiv);
+area.scrollTop = area.scrollHeight;
+}
+
+function appendTyping() {
+const msgDiv = document.createElement("div");
+msgDiv.className = "msg bot";
+msgDiv.id = "typing-indicator";
+const bubble = document.createElement("div");
+bubble.className = "bubble bubble-bot";
+const typingDiv = document.createElement("div");
+typingDiv.className = "typing-indicator";
+typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+bubble.appendChild(typingDiv);
+msgDiv.appendChild(bubble);
+area.appendChild(msgDiv);
+area.scrollTop = area.scrollHeight;
+}
+
+function removeTyping() {
+const typing = document.getElementById("typing-indicator");
+if (typing) typing.remove();
+}
+
+function extractPercentFromText(text) {
+const m = String(text).match(/عرض[:：]?\s*([5-9]|1[0-9]|2[0-9]|30)\s*%/i);
+if (m) return parseInt(m[1], 10);
+return null;
+}
+
+function isConvincingReason(text) {
+const triggers = ["قطعة","قطع","كمية","عدد","50","100","bulk","عطل","عيب","منافس","سعر","أرخص","قديم","زبون","دفع نقدي","كاش","دفع فوري","نشتري","ترجي","فواتير","فاتورة"];
+const t = text.toLowerCase();
+for (const w of triggers) if (t.includes(w)) return true;
+return false;
+}
+
+function startCountdownIfNeeded() {
+if (timerStarted) return;
+timerStarted = true;
+timeLeft = 60;
+statusEl.style.display = "block";
+statusEl.textContent = "⏳ باقي " + timeLeft + " ثانية للفصال...";
+countdownId = setInterval(() => {
+timeLeft--;
+if (timeLeft > 0) {
+statusEl.textContent = "⏳ باقي " + timeLeft + " ثانية للفصال...";
+} else {
+clearInterval(countdownId);
+statusEl.style.display = "none";
+if (!finalized) onTimerFinish();
+}
+}, 1000);
+}
+
+function makeCode(percent) {
+const rnd = Math.floor(Math.random() * 900) + 100;
+return "FESAL" + percent + rnd;
+}
+
+async function sendToWorker(payload) {
+if (USE_DEMO_MODE) return simulateBotResponse(payload);
+try {
+const response = await fetch(WORKER_URL, {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify(payload)
+});
+return response;
+} catch (error) {
+console.error("Worker error:", error);
+return simulateBotResponse(payload);
+}
+}
+
+function simulateBotResponse(payload) {
+return new Promise((resolve) => {
+setTimeout(() => {
+const lastMsg = payload.messages[payload.messages.length - 1];
+const userText = lastMsg?.content?.toLowerCase() || "";
+let reply = "";
+if (payload.finalize) {
+const percent = payload.percent_override || 10;
+resolve({ ok: true, json: async () => ({ finalize: true, percent: percent, reason: `تم الاتفاق على خصم ${percent}% بناءً على المحادثة` }) });
+return;
+}
+if (userText.includes("مرحب") || userText.includes("السلام")) {
+reply = "أهلاً وسهلاً! 😊 أنا هنا لمساعدتك. عايز خصم على إيه النهاردة؟";
+} else if (userText.includes("خصم") || userText.includes("تخفيض")) {
+if (isConvincingReason(userText)) {
+currentOfferPercent = Math.min(currentOfferPercent + 5, 30);
+reply = `عرض: ${currentOfferPercent}% 🎉 ده عرض كويس ليك!`;
+} else {
+reply = "ممكن تقولي إيه السبب اللي يخليك تستاهل خصم أكبر؟ (مثلاً: كمية كبيرة، دفع كاش)";
+}
+} else if (userText.includes("كمية") || userText.includes("قطعة") || userText.includes("100") || userText.includes("50")) {
+currentOfferPercent = Math.min(currentOfferPercent + 7, 30);
+reply = `عرض: ${currentOfferPercent}% 👍 بما إنك بتشتري كمية، ده أحسن عرض ليك!`;
+} else if (userText.includes("كاش") || userText.includes("نقدي")) {
+currentOfferPercent = Math.min(currentOfferPercent + 5, 30);
+reply = `عرض: ${currentOfferPercent}% 💰 الدفع الكاش بيديك مزايا أكتر!`;
+} else if (userText.match(/\d{2,}/)) {
+reply = "تمام، أنا فاهم احتياجك. خلينا نتفق على أحسن سعر ليك.";
+} else {
+reply = "أنا معاك! قولي احتياجاتك بالتفصيل عشان أقدر أساعدك أحسن. 😊";
+}
+resolve({ ok: true, json: async () => ({ text: reply }) });
+}, 1000);
+});
+}
+
+async function onTimerFinish() {
+finalized = true;
+append("bot", "⏳ الوقت انتهى، هنثبت آخر عرض رسمي من عندي.");
+let percent = lastOfferPercent || currentOfferPercent;
+const code = makeCode(percent);
+append("bot", `✅ الخصم النهائي: ${percent}% — (كود: ${code})`);
+try {
+const res = await sendToWorker({ messages: historyMessages, finalize: true, percent_override: percent });
+if (res.ok) {
+const j = await res.json();
+if (j.reason) append("bot", "📋 " + j.reason);
+}
+} catch (e) { console.error(e); }
+}
+
+function isAcceptanceMessage(text) {
+const t = text.trim().toLowerCase();
+const okWords = ["موافق","تمام","أوافق","ماشي","اوكي","ok","نعم","يلا","حاضر"];
+for (const w of okWords) {
+if (t === w || t.startsWith(w + " ") || t.endsWith(" " + w) || t.includes(" " + w + " ")) return true;
+}
+return false;
+}
+
+async function sendMessage() {
+const txt = inp.value.trim();
+if (!txt || finalized) return;
+append("user", txt);
+inp.value = "";
+if (!timerStarted) startCountdownIfNeeded();
+historyMessages.push({ role: "user", content: txt });
+appendTyping();
+btn.disabled = true;
+inp.disabled = true;
+try {
+const res = await sendToWorker({ messages: historyMessages, finalize: false });
+removeTyping();
+if (!res.ok) {
+const txtErr = await res.text().catch(() => "خطأ غير معروف");
+append("bot", "❌ خطأ في الاتصال: " + txtErr);
+} else {
+const j = await res.json();
+const reply = j.text || "(لا يوجد رد)";
+const p = extractPercentFromText(reply);
+if (p) lastOfferPercent = p;
+historyMessages.push({ role: "assistant", content: reply });
+append("bot", reply);
+if (isAcceptanceMessage(txt)) {
+if (!lastOfferPercent && !currentOfferPercent) {
+append("bot", "⚠️ محتاج عرض رسمي بصيغة \"عرض: X%\" قبل ما أثبت الخصم.");
+} else {
+finalized = true;
+if (countdownId) { clearInterval(countdownId); statusEl.style.display = "none"; }
+const agreedPercent = lastOfferPercent || currentOfferPercent;
+const code = makeCode(agreedPercent);
+append("bot", `✅ تم تثبيت الخصم: ${agreedPercent}% — (كود: ${code})`);
+try {
+const rr = await sendToWorker({ messages: historyMessages, finalize: true, percent_override: agreedPercent });
+if (rr.ok) {
+const jj = await rr.json();
+if (jj.reason) append("bot", "📋 " + jj.reason);
+}
+} catch(e) { console.error(e); }
+}
+}
+}
+} catch (e) {
+removeTyping();
+append("bot", "❌ خطأ في الاتصال، حاول مرة أخرى");
+console.error(e);
+} finally {
+btn.disabled = false;
+inp.disabled = false;
+inp.focus();
+}
+}
+
+btn.addEventListener("click", function(e) {
+e.preventDefault();
+e.stopPropagation();
+sendMessage();
+});
+
+inp.addEventListener("keydown", function(e) {
+if (e.key === "Enter" && !e.shiftKey) {
+e.preventDefault();
+sendMessage();
+}
+});
+
+setTimeout(() => inp.focus(), 300);
+})();
+</script>
+</body>
+</html>
