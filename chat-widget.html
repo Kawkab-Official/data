@@ -1,1 +1,216 @@
-<!doctype html> <html lang="ar" dir="rtl"> <head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"> <title>بوت كوكب — فصال مباشر</title> <style> :root { --accent:#0f1724; --accent-2:#0ea5a4; --bg:#f7fbff; --card:#ffffff; --user-bg:#dff7ff; --bot-bg:#fff8e6; --muted:#667085; --radius:16px; } *{box-sizing:border-box;margin:0;padding:0;} body{font-family:"Tahoma",system-ui;background:var(--bg);overflow-x:hidden;} .chat-fab { position:fixed; bottom:20px; right:20px; z-index:9999; width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,var(--accent-2),var(--accent)); display:flex; justify-content:center; align-items:center; color:#fff; font-size:26px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.2); transition:transform .3s; } .chat-fab:hover{transform:scale(1.1);} .chat-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:10000; } .chat-box { width:100%; height:100%; background:var(--card); display:flex; flex-direction:column; position:relative; animation:fadeIn .3s; } @keyframes fadeIn {from{opacity:0;}to{opacity:1;}} .header { background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; padding:14px 12px; display:flex; align-items:center; } .header .title{flex:1;font-weight:700;} .header .close { cursor:pointer; font-size:22px; background:none; border:none; color:#fff; } .area {flex:1; padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;} .controls{padding:8px;border-top:1px solid #eee;display:flex;flex-direction:column;gap:6px;} .input{display:flex;gap:8px;align-items:center;} .input input{flex:1;padding:10px;border-radius:14px;border:1px solid #e6eef6;font-size:14px;} .btn{padding:10px 14px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer;} .quick{display:flex;gap:6px;flex-wrap:wrap;} .quick button{flex:1;padding:8px;border-radius:12px;border:1px dashed #ccc;background:transparent;font-size:13px;cursor:pointer;color:var(--accent);} .msg{display:flex;max-width:85%;flex-direction:column;word-break:break-word;} .msg.user{align-self:flex-end;} .msg.user .bubble{background:var(--user-bg);border-radius:16px 16px 0 16px;padding:10px 14px;} .msg.bot{align-self:flex-start;} .msg.bot .bubble{background:var(--bot-bg);border-radius:16px 16px 16px 0;padding:10px 14px;} .meta{font-size:11px;color:var(--muted);margin-top:2px;text-align:right;} .typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;display:inline-block;animation:dot 1s infinite;} .typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s} @keyframes dot{0%,100%{opacity:.3;transform:translateY(0);}50%{opacity:1;transform:translateY(-3px);}} </style> </head> <body> <div class="chat-fab" id="openChat">💬</div> <div class="chat-overlay" id="chatOverlay"> <div class="chat-box"> <div class="header"> <div class="title">بوت كوكب — فصال مباشر</div> <button class="close" id="closeChat">×</button> </div> <div class="area" id="area"></div> <div class="controls"> <div class="quick" id="quickActions"> <button data-text="أريد أفضل عرض">أفضل عرض</button> <button data-text="هل في خصم أعلى؟">خصم أعلى</button> <button data-text="تمام">تمام</button> </div> <div class="input"> <input id="inp" type="text" placeholder="اكتب هنا..." /> <button id="btn" class="btn">أرسل</button> </div> </div> </div> </div> <script> (function(){ const openBtn=document.getElementById('openChat'); const overlay=document.getElementById('chatOverlay'); const closeBtn=document.getElementById('closeChat'); const area=document.getElementById('area'); const inp=document.getElementById('inp'); const btn=document.getElementById('btn'); const quick=document.getElementById('quickActions'); const WORKER_URL='https://kawkab.kawkab-arabia.workers.dev/'; let historyMessages=[],lastOfferPercent=null,finalized=false,timerStarted=false,timeLeft=60,countdownId=null; openBtn.onclick=()=>{overlay.style.display='flex';document.body.style.overflow='hidden';}; closeBtn.onclick=()=>{overlay.style.display='none';document.body.style.overflow='';}; function safeText(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;} function append(who,text){const w=document.createElement('div');w.className='msg '+(who==='user'?'user':'bot');const b=document.createElement('div');b.className='bubble';b.innerHTML=safeText(text);w.appendChild(b);const m=document.createElement('div');m.className='meta';m.textContent=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});w.appendChild(m);area.appendChild(w);area.scrollTop=area.scrollHeight;} function showTyping(){const el=document.createElement('div');el.className='msg bot';el.innerHTML='<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';area.appendChild(el);area.scrollTop=area.scrollHeight;return el;} async function sendToWorker(payload){return await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});} async function sendMessage(){const txt=inp.value.trim();if(!txt||finalized)return;append('user',txt);inp.value='';const typing=showTyping();btn.disabled=true; try{ const res=await sendToWorker({messages:historyMessages.concat([{role:'user',content:txt}])}); typing.remove(); const j=await res.json(); const reply=j.text||'مش فاهمك قوي 😅 جرب تاني'; append('bot',reply); historyMessages.push({role:'user',content:txt},{role:'assistant',content:reply}); }catch(e){typing.remove();append('bot','النت فاصل ولا إيه؟ 😅');} btn.disabled=false;inp.focus();} btn.onclick=sendMessage; inp.onkeydown=e=>{if(e.key==='Enter')sendMessage();}; quick.onclick=e=>{if(e.target.tagName==='BUTTON'){inp.value=e.target.dataset.text;inp.focus();}} inp.addEventListener('focus',()=>{setTimeout(()=>{area.scrollTop=area.scrollHeight;},300);}); append('bot','أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎'); })(); </script> </body> </html> wuilt: <script>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>بوت كوكب — فصال مباشر</title>
+<style>
+:root {
+--accent:#0f1724;
+--accent-2:#0ea5a4;
+--bg:#f7fbff;
+--card:#ffffff;
+--user-bg:#dff7ff;
+--bot-bg:#fff8e6;
+--muted:#667085;
+--radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+font-family:"Tahoma",system-ui;
+background:transparent;
+overflow:hidden;
+}
+
+.chat-fab {
+position:fixed;
+bottom:20px;
+right:20px;
+z-index:9999;
+width:60px;
+height:60px;
+border-radius:50%;
+background:linear-gradient(135deg,var(--accent-2),var(--accent));
+display:flex;
+justify-content:center;
+align-items:center;
+color:#fff;
+font-size:26px;
+cursor:pointer;
+box-shadow:0 4px 12px rgba(0,0,0,0.2);
+transition:transform .3s;
+}
+.chat-fab:hover{transform:scale(1.1);}
+.chat-fab.hidden{display:none;}
+
+.chat-overlay {
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.5);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:10000;
+}
+.chat-overlay.show{display:flex;}
+
+.chat-box {
+width:100%;
+height:100%;
+background:var(--card);
+display:flex;
+flex-direction:column;
+position:relative;
+animation:fadeIn .3s;
+}
+@keyframes fadeIn {from{opacity:0;}to{opacity:1;}}
+
+.header {
+background:linear-gradient(90deg,var(--accent),var(--accent-2));
+color:#fff;
+padding:14px 12px;
+display:flex;
+align-items:center;
+}
+.header .title{flex:1;font-weight:700;}
+.header .close {
+cursor:pointer;
+font-size:22px;
+background:none;
+border:none;
+color:#fff;
+}
+
+.area {flex:1; padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;}
+.controls{padding:8px;border-top:1px solid #eee;display:flex;flex-direction:column;gap:6px;}
+.input{display:flex;gap:8px;align-items:center;}
+.input input{flex:1;padding:10px;border-radius:14px;border:1px solid #e6eef6;font-size:14px;}
+.btn{padding:10px 14px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer;}
+.quick{display:flex;gap:6px;flex-wrap:wrap;}
+.quick button{flex:1;padding:8px;border-radius:12px;border:1px dashed #ccc;background:transparent;font-size:13px;cursor:pointer;color:var(--accent);}
+
+.msg{display:flex;max-width:85%;flex-direction:column;word-break:break-word;}
+.msg.user{align-self:flex-end;}
+.msg.user .bubble{background:var(--user-bg);border-radius:16px 16px 0 16px;padding:10px 14px;}
+.msg.bot{align-self:flex-start;}
+.msg.bot .bubble{background:var(--bot-bg);border-radius:16px 16px 16px 0;padding:10px 14px;}
+.meta{font-size:11px;color:var(--muted);margin-top:2px;text-align:right;}
+
+.typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;display:inline-block;animation:dot 1s infinite;}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,100%{opacity:.3;transform:translateY(0);}50%{opacity:1;transform:translateY(-3px);}}
+</style>
+</head>
+<body>
+<div class="chat-fab" id="openChat">💬</div>
+
+<div class="chat-overlay" id="chatOverlay">
+<div class="chat-box">
+<div class="header">
+<div class="title">بوت كوكب — فصال مباشر</div>
+<button class="close" id="closeChat">×</button>
+</div>
+<div class="area" id="area"></div>
+<div class="controls">
+<div class="quick" id="quickActions">
+<button data-text="أريد أفضل عرض">أفضل عرض</button>
+<button data-text="هل في خصم أعلى؟">خصم أعلى</button>
+<button data-text="تمام">تمام</button>
+</div>
+<div class="input">
+<input id="inp" type="text" placeholder="اكتب هنا..." />
+<button id="btn" class="btn">أرسل</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+(function(){
+const openBtn=document.getElementById('openChat');
+const overlay=document.getElementById('chatOverlay');
+const closeBtn=document.getElementById('closeChat');
+const area=document.getElementById('area');
+const inp=document.getElementById('inp');
+const btn=document.getElementById('btn');
+const quick=document.getElementById('quickActions');
+
+const WORKER_URL='https://kawkab.kawkab-arabia.workers.dev/';
+let historyMessages=[],lastOfferPercent=null,finalized=false,timerStarted=false,timeLeft=60,countdownId=null;
+let chatOpened=false;
+
+openBtn.onclick=()=>{
+overlay.classList.add('show');
+openBtn.classList.add('hidden');
+if(!chatOpened){
+append('bot','أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎');
+chatOpened=true;
+}
+window.parent.postMessage({action:'chatOpened'},'*');
+};
+
+closeBtn.onclick=()=>{
+overlay.classList.remove('show');
+openBtn.classList.remove('hidden');
+window.parent.postMessage({action:'chatClosed'},'*');
+};
+
+function safeText(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+function append(who,text){
+const w=document.createElement('div');
+w.className='msg '+(who==='user'?'user':'bot');
+const b=document.createElement('div');
+b.className='bubble';
+b.innerHTML=safeText(text);
+w.appendChild(b);
+const m=document.createElement('div');
+m.className='meta';
+m.textContent=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+w.appendChild(m);
+area.appendChild(w);
+area.scrollTop=area.scrollHeight;
+}
+
+function showTyping(){
+const el=document.createElement('div');
+el.className='msg bot';
+el.innerHTML='<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+area.appendChild(el);
+area.scrollTop=area.scrollHeight;
+return el;
+}
+
+async function sendToWorker(payload){
+return await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+}
+
+async function sendMessage(){
+const txt=inp.value.trim();
+if(!txt||finalized)return;
+append('user',txt);
+inp.value='';
+const typing=showTyping();
+btn.disabled=true;
+
+try{
+const res=await sendToWorker({messages:historyMessages.concat([{role:'user',content:txt}])});
+typing.remove();
+const j=await res.json();
+const reply=j.text||'مش فاهمك قوي 😅 جرب تاني';
+append('bot',reply);
+historyMessages.push({role:'user',content:txt},{role:'assistant',content:reply});
+}catch(e){typing.remove();append('bot','النت فاصل ولا إيه؟ 😅');}
+
+btn.disabled=false;inp.focus();
+}
+
+btn.onclick=sendMessage;
+inp.onkeydown=e=>{if(e.key==='Enter')sendMessage();};
+quick.onclick=e=>{if(e.target.tagName==='BUTTON'){inp.value=e.target.dataset.text;inp.focus();}}
+inp.addEventListener('focus',()=>{setTimeout(()=>{area.scrollTop=area.scrollHeight;},300);});
+})();
+</script>
+</body>
+</html>
