@@ -21,6 +21,17 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;overflow:hidden}
 
+  .chat-input {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 10px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 20px); /* زودنا الـ 20px */
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+}
+
 /* Floating button (داخل الـ iframe) */
 .chat-fab {
   position:fixed;
@@ -58,17 +69,6 @@ html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;over
   border-radius:12px 12px 0 0;
   overflow:hidden;
   box-shadow:0 10px 30px rgba(2,6,23,0.12);
-}
-.chat-input {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #fff;
-  padding: 8px;
-  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 16px); 
-  /* env(...) للـ safe area ولو مش مدعوم يحط 20px افتراضي */
-  box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
 }
 
 /* الهيدر: نأخذ في الحسبان safe-area-inset-top حتى لا يختفي تحت شريط المتصفح */
