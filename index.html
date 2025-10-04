@@ -2,189 +2,448 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>بوت كوكب — واجهة محادثة</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>بوت كوكب</title>
 <style>
 :root{
-  --accent:#0f1724; 
-  --accent-2:#0ea5a4; 
+  --accent:#0f1724;
+  --accent-2:#0ea5a4;
   --bg:#f7fbff;
   --card:#ffffff;
   --user-bg:#dff7ff;
   --bot-bg:#fff8e6;
   --muted:#667085;
-  --radius:16px;
 }
 *{box-sizing:border-box; margin:0; padding:0}
-html,body{height:100%; font-family:Tahoma,Arial,system-ui; background:var(--bg);}
-body{display:flex; justify-content:center; align-items:flex-start;}
-.widget{width:100%; height:100vh; border-radius:0; overflow:hidden; display:flex; flex-direction:column; background:var(--card);}
-.header{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; padding:14px 12px; font-weight:700; display:flex; gap:10px; align-items:center;}
-.header .title{flex:1; font-size:16px;}
-.header .sub{font-size:13px; opacity:0.95;}
-.header .dot{width:10px; height:10px; border-radius:50%; background:#fff3;}
-.area{flex:1; padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; background:linear-gradient(180deg,#fbfdff,#f6fbff);}
-.controls{padding:8px; border-top:1px solid #eef2f6; background:transparent; display:flex; flex-direction:column; gap:6px;}
-.input{display:flex; gap:8px; align-items:center; width:100%;}
-.input input{flex:1; padding:10px 12px; border-radius:14px; border:1px solid #e6eef6; background:#fff; font-size:14px;}
-.btn{padding:10px 14px; border-radius:14px; border:none; background:var(--accent); color:#fff; cursor:pointer;}
-.quick{display:flex; gap:6px;}
-.quick button{flex:1; padding:8px; border-radius:12px; border:1px dashed rgba(0,0,0,0.05); background:transparent; font-size:13px; color:var(--accent); cursor:pointer;}
-.msg{display:flex; max-width:85%; flex-direction:column; word-break:break-word;}
-.msg .bubble{padding:10px 14px; border-radius:16px; line-height:1.4; box-shadow:0 4px 12px rgba(0,0,0,0.05);}
-.msg.user{align-self:flex-end;}
-.msg.user .bubble{background:var(--user-bg); border:1px solid rgba(0,0,0,0.05);}
-.msg.bot{align-self:flex-start;}
-.msg.bot .bubble{background:var(--bot-bg); border:1px solid rgba(245,231,158,0.6);}
-.meta{font-size:11px; color:var(--muted); margin-top:2px; text-align:right;}
-.typing{height:14px; display:flex; gap:4px;}
-.typing span{width:6px; height:6px; background:var(--muted); border-radius:50%; animation:dot 1s infinite;}
-.typing span:nth-child(2){animation-delay:.15s}
-.typing span:nth-child(3){animation-delay:.3s}
-@keyframes dot{0%,100%{transform:translateY(0); opacity:.4}50%{transform:translateY(-5px); opacity:1}}
-::-webkit-scrollbar{width:6px;}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.1); border-radius:3px;}
-.footer-note{font-size:12px; color:var(--muted); text-align:center; padding:6px;}
+html,body{
+  height:100%;
+  width:100%;
+  font-family:Tahoma,Arial,sans-serif;
+  background:var(--bg);
+  overflow:hidden;
+  position:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+body{
+  display:flex;
+  flex-direction:column;
+}
+.widget{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  background:var(--card);
+  position:relative;
+}
+.header{
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  color:#fff;
+  padding:14px 16px;
+  font-weight:700;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+.header .title{flex:1; font-size:15px;}
+.header .sub{font-size:12px; opacity:0.9;}
+.header .dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#4ade80;
+  box-shadow:0 0 8px #4ade80;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{
+  0%,100%{opacity:1}
+  50%{opacity:0.5}
+}
+.area{
+  flex:1;
+  padding:12px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  background:linear-gradient(180deg,#fbfdff,#f6fbff);
+  -webkit-overflow-scrolling:touch;
+}
+.controls{
+  padding:10px;
+  padding-bottom:max(10px, env(safe-area-inset-bottom));
+  border-top:1px solid #eef2f6;
+  background:#fff;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex-shrink:0;
+}
+.input-wrapper{
+  display:flex;
+  gap:8px;
+  align-items:flex-end;
+}
+.input-wrapper input{
+  flex:1;
+  padding:12px 14px;
+  border-radius:20px;
+  border:1px solid #e6eef6;
+  background:#fff;
+  font-size:15px;
+  outline:none;
+  transition:border 0.2s;
+}
+.input-wrapper input:focus{
+  border-color:var(--accent-2);
+}
+.btn{
+  padding:12px 18px;
+  border-radius:20px;
+  border:none;
+  background:var(--accent);
+  color:#fff;
+  cursor:pointer;
+  font-weight:600;
+  font-size:14px;
+  transition:transform 0.2s, opacity 0.2s;
+  flex-shrink:0;
+}
+.btn:active{
+  transform:scale(0.95);
+}
+.btn:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+}
+.quick{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.quick button{
+  padding:8px 14px;
+  border-radius:16px;
+  border:1px solid rgba(14,165,164,0.3);
+  background:rgba(14,165,164,0.05);
+  font-size:13px;
+  color:var(--accent);
+  cursor:pointer;
+  transition:all 0.2s;
+  white-space:nowrap;
+}
+.quick button:active{
+  transform:scale(0.95);
+  background:rgba(14,165,164,0.15);
+}
+.msg{
+  display:flex;
+  max-width:85%;
+  flex-direction:column;
+  word-break:break-word;
+  animation:slideIn 0.3s ease-out;
+}
+@keyframes slideIn{
+  from{
+    opacity:0;
+    transform:translateY(10px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+.msg .bubble{
+  padding:11px 15px;
+  border-radius:18px;
+  line-height:1.5;
+  font-size:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+.msg.user{
+  align-self:flex-end;
+}
+.msg.user .bubble{
+  background:var(--user-bg);
+  border:1px solid rgba(14,165,164,0.2);
+}
+.msg.bot{
+  align-self:flex-start;
+}
+.msg.bot .bubble{
+  background:var(--bot-bg);
+  border:1px solid rgba(245,231,158,0.6);
+}
+.meta{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:3px;
+  text-align:inherit;
+  padding:0 4px;
+}
+.typing{
+  height:20px;
+  display:flex;
+  gap:4px;
+  align-items:center;
+}
+.typing span{
+  width:7px;
+  height:7px;
+  background:var(--muted);
+  border-radius:50%;
+  animation:dot 1.2s infinite ease-in-out;
+}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes dot{
+  0%,100%{transform:translateY(0); opacity:.4}
+  50%{transform:translateY(-6px); opacity:1}
+}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15); border-radius:3px;}
+.footer-note{
+  font-size:11px;
+  color:var(--muted);
+  text-align:center;
+  padding:6px 10px;
+  background:rgba(0,0,0,0.02);
+}
 </style>
 </head>
 <body>
-<div class="widget" role="region" aria-label="بوت كوكب">
+<div class="widget">
   <div class="header">
     <div class="dot"></div>
-    <div class="title">بوت كوكب — خدمة العملاء</div>
-    <div class="sub">تفاوض ذكي · خصومات حتى 20%</div>
+    <div>
+      <div class="title">بوت كوكب — خدمة العملاء</div>
+      <div class="sub">خصومات حصرية · فصال ذكي</div>
+    </div>
   </div>
-
+  
   <div class="area" id="area" aria-live="polite"></div>
-
+  
   <div class="controls">
     <div class="quick" id="quickActions">
-      <button data-text="أريد أفضل عرض">أفضل عرض</button>
-      <button data-text="موافق">أوافق</button>
-      <button data-text="هل في خصم أعلى؟">خصم أعلى</button>
+      <button data-text="عايز أحسن عرض">💰 أحسن عرض</button>
+      <button data-text="موافق">✅ موافق</button>
+      <button data-text="في خصم أكتر؟">🔥 خصم أكتر</button>
     </div>
-    <div class="input">
-      <input id="inp" type="text" placeholder="اكتب رسالتك..." aria-label="نص الرسالة" />
-      <button id="btn" class="btn">أرسل</button>
+    <div class="input-wrapper">
+      <input id="inp" type="text" placeholder="اكتب هنا..." aria-label="رسالتك" autocomplete="off" />
+      <button id="btn" class="btn">إرسال</button>
     </div>
   </div>
-  <div class="footer-note">ملاحظة: لن يصدر كود إلا بعد انتهاء الوقت أو موافقتك.</div>
+  
+  <div class="footer-note">الكود هيظهر بعد التفاوض أو انتهاء الوقت</div>
 </div>
 
 <script>
 (function(){
-  const WORKER_URL = window.KAWKAB_WORKER_URL || 'https://kawkab.kawkab-arabia.workers.dev/';
-  const area = document.getElementById('area');
-  const inp = document.getElementById('inp');
-  const btn = document.getElementById('btn');
-  const quick = document.getElementById('quickActions');
+const WORKER_URL = window.KAWKAB_WORKER_URL || 'https://kawkab.kawkab-arabia.workers.dev/';
+const area = document.getElementById('area');
+const inp = document.getElementById('inp');
+const btn = document.getElementById('btn');
+const quick = document.getElementById('quickActions');
 
-  let historyMessages = [];
-  let timerStarted = false;
-  let countdownId = null;
-  let timeLeft = 60;
-  let finalized = false;
-  let lastOfferPercent = null;
+let historyMessages = [];
+let timerStarted = false;
+let countdownId = null;
+let timeLeft = 60;
+let finalized = false;
+let lastOfferPercent = null;
 
-  function safeText(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function safeText(s){
+  const d=document.createElement('div');
+  d.textContent=s;
+  return d.innerHTML;
+}
 
-  function append(who,text,opts){
-    const wrapper=document.createElement('div');
-    wrapper.className='msg '+(who==='user'?'user':'bot');
-    const bubble=document.createElement('div'); bubble.className='bubble';
-    bubble.innerHTML=safeText((opts&&opts.prefix)?opts.prefix+' ':'')+text.replace(/\n/g,'<br>');
-    wrapper.appendChild(bubble);
-    const meta=document.createElement('div'); meta.className='meta';
-    meta.textContent=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
-    wrapper.appendChild(meta);
-    area.appendChild(wrapper);
-    area.scrollTop=area.scrollHeight;
+function append(who,text,opts){
+  const wrapper=document.createElement('div');
+  wrapper.className='msg '+(who==='user'?'user':'bot');
+  const bubble=document.createElement('div');
+  bubble.className='bubble';
+  bubble.innerHTML=safeText((opts&&opts.prefix)?opts.prefix+' ':'')+text.replace(/\n/g,'<br>');
+  wrapper.appendChild(bubble);
+  const meta=document.createElement('div');
+  meta.className='meta';
+  meta.textContent=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+  wrapper.appendChild(meta);
+  area.appendChild(wrapper);
+  setTimeout(()=>{area.scrollTop=area.scrollHeight;},50);
+}
+
+function showTyping(){
+  const el=document.createElement('div');
+  el.className='msg bot';
+  const b=document.createElement('div');
+  b.className='bubble';
+  b.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
+  el.appendChild(b);
+  area.appendChild(el);
+  setTimeout(()=>{area.scrollTop=area.scrollHeight;},50);
+  return el;
+}
+
+function extractPercentFromText(text){
+  const m=String(text).match(/\b([5-9]|1[0-9]|2[0-9]|30)\b/);
+  return m?parseInt(m[0],10):null;
+}
+
+function makeCode(percent){
+  return 'FESAL'+percent+Math.floor(Math.random()*900+100);
+}
+
+function startCountdownIfNeeded(){
+  if(timerStarted) return;
+  timerStarted=true;
+  timeLeft=60;
+  const statusBubble=document.createElement('div');
+  statusBubble.className='msg bot';
+  statusBubble.setAttribute('id','k-countdown');
+  statusBubble.innerHTML='<div class="bubble">⏳ باقي <b id="k-time">'+timeLeft+'</b> ثانية</div>';
+  area.appendChild(statusBubble);
+  setTimeout(()=>{area.scrollTop=area.scrollHeight;},50);
+  
+  countdownId=setInterval(()=>{
+    timeLeft--;
+    const el=document.getElementById('k-time');
+    if(el) el.textContent=timeLeft;
+    if(timeLeft<=0){
+      clearInterval(countdownId);
+      const s=document.getElementById('k-countdown');
+      if(s) s.remove();
+      if(!finalized) onTimerFinish();
+    }
+  },1000);
+}
+
+async function sendToWorker(payload){
+  return await fetch(WORKER_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+}
+
+async function onTimerFinish(){
+  finalized=true;
+  append('bot','⏰ الوقت خلص! هثبتلك آخر عرض.');
+  const percent=lastOfferPercent||10;
+  const code=makeCode(percent);
+  append('bot',`🎉 خصمك النهائي: ${percent}%\n\n🎫 كود الخصم: ${code}`);
+  
+  try{
+    const res=await sendToWorker({
+      messages:historyMessages,
+      finalize:true,
+      percent_override:percent
+    });
+    if(res&&res.ok){
+      const j=await res.json();
+      if(j.reason) append('bot',j.reason);
+    }
+  }catch(e){
+    console.error(e);
   }
+}
 
-  function showTyping(){
-    const el=document.createElement('div'); el.className='msg bot';
-    const b=document.createElement('div'); b.className='bubble';
-    b.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
-    el.appendChild(b); area.appendChild(el); area.scrollTop=area.scrollHeight;
-    return el;
-  }
+function isAcceptanceMessage(text){
+  const t=text.trim().toLowerCase();
+  return ['موافق','تمام','أوافق','ماشي','اوكي','ok','نعم','قبول','اوك'].some(w=>t===w||t.includes(w));
+}
 
-  function extractPercentFromText(text){
-    const m=String(text).match(/\b([5-9]|1[0-9]|20)\b/); return m?parseInt(m[0],10):null;
-  }
-
-  function makeCode(percent){ return 'FESAL'+percent+Math.floor(Math.random()*900+100); }
-
-  function startCountdownIfNeeded(){
-    if(timerStarted) return;
-    timerStarted=true; timeLeft=60;
-    const statusBubble=document.createElement('div'); statusBubble.className='msg bot';
-    statusBubble.setAttribute('id','k-countdown');
-    statusBubble.innerHTML='<div class="bubble">⏳ باقي <b id="k-time">'+timeLeft+'</b> ثانية للفصال...</div>';
-    area.appendChild(statusBubble); area.scrollTop=area.scrollHeight;
-    countdownId=setInterval(()=>{
-      timeLeft--; const el=document.getElementById('k-time'); if(el) el.textContent=timeLeft;
-      if(timeLeft<=0){ clearInterval(countdownId); const s=document.getElementById('k-countdown'); if(s) s.remove(); if(!finalized) onTimerFinish(); }
-    },1000);
-  }
-
-  async function sendToWorker(payload){
-    return await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-  }
-
-  async function onTimerFinish(){
-    finalized=true;
-    append('bot','⏳ الوقت انتهى، سأثبت الخصم النهائي على آخر عرض.');
-    const percent=lastOfferPercent||10;
-    const code=makeCode(percent);
-    append('bot',`الخصم النهائي: ${percent}% — (كود: ${code})`);
-    try{
-      const res=await sendToWorker({messages:historyMessages,finalize:true,percent_override:percent});
-      if(res&&res.ok){ const j=await res.json(); if(j.reason) append('bot','(تبرير): '+j.reason); }
-    }catch(e){ console.error(e); }
-  }
-
-  function isAcceptanceMessage(text){
-    const t=text.trim().toLowerCase();
-    return ['موافق','تمام','أوافق','ماشي','اوكي','ok','نعم','قبول'].some(w=>t===w||t.includes(' '+w+' '));
-  }
-
-  async function sendMessage(){
-    const txt=inp.value.trim(); if(!txt||finalized) return;
-    append('user',safeText(txt)); inp.value='';
-    historyMessages.push({role:'user',content:txt});
-    if(!timerStarted) startCountdownIfNeeded();
-    const typingEl=showTyping(); btn.disabled=true;
-    try{
-      const res=await sendToWorker({messages:historyMessages,finalize:false});
-      typingEl.remove();
-      if(!res.ok){ append('bot','خطأ في السيرفر'); } else{
-        const j=await res.json(); const reply=j.text||'(لا يوجد رد)';
-        const p=extractPercentFromText(reply); if(p) lastOfferPercent=p;
-        historyMessages.push({role:'assistant',content:reply});
-        append('bot',reply);
-        if(isAcceptanceMessage(txt)){
-          const agreedPercent=lastOfferPercent||10; finalized=true; if(countdownId) clearInterval(countdownId);
-          const code=makeCode(agreedPercent);
-          append('bot',`تم تثبيت الخصم: ${agreedPercent}% — (كود: ${code})`);
-          try{
-            const rr=await sendToWorker({messages:historyMessages,finalize:true,percent_override:agreedPercent});
-            if(rr.ok){ const jj=await rr.json(); if(jj.reason) append('bot','(تبرير): '+jj.reason); }
-          }catch(e){console.error(e);}
-        }
+async function sendMessage(){
+  const txt=inp.value.trim();
+  if(!txt||finalized) return;
+  
+  append('user',txt);
+  inp.value='';
+  historyMessages.push({role:'user',content:txt});
+  
+  if(!timerStarted) startCountdownIfNeeded();
+  
+  const typingEl=showTyping();
+  btn.disabled=true;
+  
+  try{
+    const res=await sendToWorker({
+      messages:historyMessages,
+      finalize:false
+    });
+    
+    typingEl.remove();
+    
+    if(!res.ok){
+      append('bot','⚠️ في مشكلة، جرب تاني');
+    } else{
+      const j=await res.json();
+      const reply=j.text||'(لا يوجد رد)';
+      const p=extractPercentFromText(reply);
+      if(p) lastOfferPercent=p;
+      
+      historyMessages.push({role:'assistant',content:reply});
+      append('bot',reply);
+      
+      if(isAcceptanceMessage(txt)){
+        const agreedPercent=lastOfferPercent||10;
+        finalized=true;
+        if(countdownId) clearInterval(countdownId);
+        const code=makeCode(agreedPercent);
+        append('bot',`🎉 تمام! خصمك: ${agreedPercent}%\n\n🎫 كود: ${code}`);
+        
+        try{
+          const rr=await sendToWorker({
+            messages:historyMessages,
+            finalize:true,
+            percent_override:agreedPercent
+          });
+          if(rr.ok){
+            const jj=await rr.json();
+            if(jj.reason) append('bot',jj.reason);
+          }
+        }catch(e){console.error(e);}
       }
-    }catch(e){ typingEl.remove(); append('bot','(لا يوجد اتصال) جرب تاني'); console.error(e);}
-    finally{ btn.disabled=false; inp.focus(); }
+    }
+  }catch(e){
+    typingEl.remove();
+    append('bot','⚠️ مفيش نت، جرب تاني');
+    console.error(e);
+  } finally{
+    btn.disabled=false;
+    inp.focus();
   }
+}
 
-  quick.addEventListener('click',e=>{ const t=e.target; if(t.tagName!=='BUTTON') return; inp.value=t.getAttribute('data-text'); inp.focus(); });
-  btn.addEventListener('click',sendMessage);
-  inp.addEventListener('keydown',e=>{ if(e.key==='Enter') sendMessage(); });
+quick.addEventListener('click',e=>{
+  const t=e.target;
+  if(t.tagName!=='BUTTON') return;
+  inp.value=t.getAttribute('data-text');
+  sendMessage();
+});
 
-  window.KAWKAB_WIDGET={setWorker:url=>{if(typeof url==='string'){window.KAWKAB_WORKER_URL=url; console.log('KAWKAB: worker set to',url);}}};
+btn.addEventListener('click',sendMessage);
+inp.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){
+    e.preventDefault();
+    sendMessage();
+  }
+});
 
-  append('bot','أهلاً! أنا بوت كوكب — هنتفاوض على أحسن خصم وأحلي كلام عن البراند :)');
+window.KAWKAB_WIDGET={
+  setWorker:url=>{
+    if(typeof url==='string'){
+      window.KAWKAB_WORKER_URL=url;
+      console.log('KAWKAB: worker =',url);
+    }
+  }
+};
 
+append('bot','أهلاً! 👋 أنا بوت كوكب\nهفاوضك على أحسن خصم 💪');
 })();
 </script>
 </body>
