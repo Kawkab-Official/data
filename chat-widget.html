@@ -141,19 +141,27 @@ let historyMessages=[],lastOfferPercent=null,finalized=false,timerStarted=false,
 let chatOpened=false;
 
 openBtn.onclick=()=>{
+try{
 overlay.classList.add('show');
 openBtn.classList.add('hidden');
 if(!chatOpened){
 append('bot','أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎');
 chatOpened=true;
 }
+if(window.parent && window.parent !== window){
 window.parent.postMessage({action:'chatOpened'},'*');
+}
+}catch(e){console.error('Error opening chat:',e);}
 };
 
 closeBtn.onclick=()=>{
+try{
 overlay.classList.remove('show');
 openBtn.classList.remove('hidden');
+if(window.parent && window.parent !== window){
 window.parent.postMessage({action:'chatClosed'},'*');
+}
+}catch(e){console.error('Error closing chat:',e);}
 };
 
 function safeText(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
