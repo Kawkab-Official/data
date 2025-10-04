@@ -1,92 +1,146 @@
 <!doctype html>
-<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-<title>بوت كوكب</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>بوت كوكب — فصال مباشر</title>
 <style>
 :root{
-  --accent:#111;
-  --userBg:#d0f0ff;
-  --botBg:#fff6c2;
-  --card:#fff;
+  --accent:#0f1724;
+  --accent-2:#0ea5a4;
+  --bg:#f7fbff;
+  --card:#ffffff;
+  --user-bg:#dff7ff;
+  --bot-bg:#fff8e6;
+  --muted:#667085;
+  --radius:16px;
+  --vh:1vh; /* سيتم تحديثه عبر JS ليتعامل مع شريط المتصفح */
 }
 
-html,body{
-  height:100%;
-  margin:0;
-  background:transparent;
-  font-family:"Tahoma",system-ui;
+/* reset */
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;overflow:hidden}
+
+/* Floating button (داخل الـ iframe) */
+.chat-fab {
+  position:fixed;
+  bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+  right:20px;
+  z-index:9999;
+  width:60px;height:60px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent-2),var(--accent));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;
+  cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.18);
+  transition:transform .25s,opacity .25s;
+}
+.chat-fab:hover{transform:scale(1.05)}
+.chat-fab.hidden{opacity:0;pointer-events:none}
+
+/* overlay full screen (تحسب ارتفاع ديناميكيًا) */
+.chat-overlay {
+  position:fixed;inset:0;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.45);z-index:10000;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
+/* show */
+.chat-overlay.show{display:flex}
+
+/* صندوق الشات - نستخدم vh ديناميكي */
 .chat-box {
   width:100%;
-  height:100%;
+  height:calc(var(--vh) * 100);
   max-height:100dvh;
   background:var(--card);
-  display:flex;
-  flex-direction:column;
+  display:flex;flex-direction:column;position:relative;
   border-radius:12px 12px 0 0;
   overflow:hidden;
   box-shadow:0 10px 30px rgba(2,6,23,0.12);
 }
 
+/* الهيدر: نأخذ في الحسبان safe-area-inset-top حتى لا يختفي تحت شريط المتصفح */
+.header {
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  color:#fff;padding:12px 12px;
+  display:flex;align-items:center;flex-shrink:0;
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:100;
+  padding-top:calc(12px + env(safe-area-inset-top,0px));
+}
+.header .title{flex:1;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header .close{cursor:pointer;font-size:28px;background:none;border:none;color:#fff;width:36px;height:36px;display:flex;align-items:center;justify-content:center;padding:0}
+
+/* المحتوى قابل للتمرير (ونعطيه min-height:0 لتفادي مشاكل flex-scroll) */
 .area{
-  flex:1;
-  padding:12px;
-  overflow-y:auto;
-  overflow-x:hidden;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  min-height:0;
+  flex:1; padding:12px; overflow-y:auto; overflow-x:hidden;
+  display:flex;flex-direction:column;gap:8px;min-height:0;
   -webkit-overflow-scrolling:touch;
   scroll-behavior:smooth;
 }
 
+/* عناصر التحكم في الأسفل - نأخذ safe-area-inset-bottom */
 .controls{
-  padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));
-  border-top:1px solid #eee;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  flex-shrink:0;
-  background:var(--card);
+  padding:10px 12px  calc(12px + env(safe-area-inset-bottom,0px));
+  border-top:1px solid #eee;display:flex;flex-direction:column;gap:8px;flex-shrink:0;background:var(--card);
 }
-
-.chat-input{
-  border:1px solid #ccc;
-  border-radius:8px;
-  padding:10px;
-  font-size:14px;
-  resize:none;
-  width:100%;
-  box-sizing:border-box;
+.input{display:flex;gap:8px;align-items:center}
+.input input{
+  flex:1;padding:10px;border-radius:14px;border:1px solid #e6eef6;font-size:14px;min-width:0;
 }
+.btn{padding:10px 14px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+.quick{display:flex;gap:8px;flex-wrap:wrap}
+.quick button{padding:8px;border-radius:12px;border:1px dashed #ccc;background:transparent;font-size:13px;cursor:pointer;color:var(--accent)}
 
-button{
-  padding:10px;
-  background:var(--accent);
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
+/* الرسائل */
+.msg{display:flex;max-width:85%;flex-direction:column;word-break:break-word}
+.msg.user{align-self:flex-end}
+.msg.user .bubble{background:var(--user-bg);border-radius:16px 16px 0 16px;padding:10px 14px}
+.msg.bot{align-self:flex-start}
+.msg.bot .bubble{background:var(--bot-bg);border-radius:16px 16px 16px 0;padding:10px 14px}
+.meta{font-size:11px;color:var(--muted);margin-top:4px;text-align:right}
+
+/* typing animation */
+.typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;display:inline-block;animation:dot 1s infinite}
+.typing span:nth-child(2){animation-delay:.18s}
+.typing span:nth-child(3){animation-delay:.36s}
+@keyframes dot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+
+/* responsive tweaks */
+@media (min-width:700px){
+  .chat-box{width:640px;border-radius:14px}
+  .chat-fab{right:28px;bottom:28px}
 }
 </style>
 </head>
 <body>
-<div class="chat-box">
-  <div class="area" id="messages">
-    <div>👋 أهلاً بك في بوت كوكب</div>
-  </div>
-  <div class="controls">
-    <textarea class="chat-input" rows="1" placeholder="اكتب رسالتك..."></textarea>
-    <button>إرسال</button>
+<!-- Floating button داخل الـ iframe -->
+<div class="chat-fab" id="openChat" role="button" aria-label="افتح الشات">💬</div>
+
+<!-- Overlay الشات -->
+<div class="chat-overlay" id="chatOverlay" aria-hidden="true">
+  <div class="chat-box" role="dialog" aria-modal="true" aria-label="بوت كوكب">
+    <div class="header">
+      <div class="title">بوت كوكب — فصال مباشر</div>
+      <button class="close" id="closeChat" aria-label="اغلاق">×</button>
+    </div>
+
+    <div class="area" id="area" tabindex="0" aria-live="polite" aria-atomic="false"></div>
+
+    <div class="controls">
+      <div class="quick" id="quickActions" aria-hidden="false">
+        <button data-text="أريد أفضل عرض">أفضل عرض</button>
+        <button data-text="هل في خصم أعلى؟">خصم أعلى</button>
+        <button data-text="تمام">تمام</button>
+      </div>
+
+      <div class="input">
+        <input id="inp" type="text" placeholder="اكتب هنا..." aria-label="اكتب رسالتك" autocomplete="off" />
+        <button id="btn" class="btn" aria-label="أرسل">أرسل</button>
+      </div>
+    </div>
   </div>
 </div>
-</body>
-</html>
 
 <script>
 (function(){
