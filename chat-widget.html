@@ -61,15 +61,14 @@ overflow:hidden;
 .chat-box {
 width:100%;
 height:100%;
-max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+max-height:100vh;
+max-height:100dvh;
 background:var(--card);
 display:flex;
 flex-direction:column;
 position:relative;
 animation:fadeIn .3s;
 overflow:hidden;
-margin:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 @keyframes fadeIn {from{opacity:0;}to{opacity:1;}}
 
@@ -111,8 +110,7 @@ min-height:0;
 -webkit-overflow-scrolling:touch;
 }
 .controls{
-padding:8px 12px 12px 12px;
-padding-bottom:max(12px, env(safe-area-inset-bottom));
+padding:8px;
 border-top:1px solid #eee;
 display:flex;
 flex-direction:column;
@@ -144,26 +142,6 @@ min-width:0;
 .typing span:nth-child(2){animation-delay:.2s}
 .typing span:nth-child(3){animation-delay:.4s}
 @keyframes dot{0%,100%{opacity:.3;transform:translateY(0);}50%{opacity:1;transform:translateY(-3px);}}
-
-@media (max-width:768px) {
-.chat-box {
-max-height:100vh;
-max-height:100svh;
-margin:0;
-}
-.controls {
-padding-bottom:max(16px, env(safe-area-inset-bottom));
-}
-.area {
-padding-bottom:20px;
-}
-}
-
-@supports (height: 100dvh) {
-.chat-overlay {
-height:100dvh;
-}
-}
 </style>
 </head>
 <body>
@@ -208,15 +186,6 @@ openBtn.onclick=()=>{
 try{
 overlay.classList.add('show');
 openBtn.classList.add('hidden');
-
-// ظبط ارتفاع الشات حسب الشاشة الفعلية
-const adjustHeight=()=>{
-const vh=window.innerHeight;
-overlay.style.height=vh+'px';
-};
-adjustHeight();
-window.addEventListener('resize',adjustHeight);
-
 if(!chatOpened){
 append('bot','أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎');
 chatOpened=true;
@@ -261,9 +230,7 @@ const el=document.createElement('div');
 el.className='msg bot';
 el.innerHTML='<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
 area.appendChild(el);
-setTimeout(()=>{
-area.scrollTo({top:area.scrollHeight,behavior:'smooth'});
-},100);
+area.scrollTop=area.scrollHeight;
 return el;
 }
 
@@ -294,15 +261,7 @@ btn.disabled=false;inp.focus();
 btn.onclick=sendMessage;
 inp.onkeydown=e=>{if(e.key==='Enter')sendMessage();};
 quick.onclick=e=>{if(e.target.tagName==='BUTTON'){inp.value=e.target.dataset.text;inp.focus();}}
-inp.addEventListener('focus',()=>{
-setTimeout(()=>{
-// scroll للرسايل
-area.scrollTo({top:area.scrollHeight,behavior:'smooth'});
-// تأكد إن الـ input ظاهر
-inp.scrollIntoView({behavior:'smooth',block:'nearest'});
-window.scrollTo(0,0);
-},300);
-});
+inp.addEventListener('focus',()=>{setTimeout(()=>{area.scrollTop=area.scrollHeight;},300);});
 })();
 </script>
 </body>
