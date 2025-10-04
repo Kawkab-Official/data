@@ -591,21 +591,37 @@ btn.disabled = true;
 inp.disabled = true;
 inp.blur(); // إزالة التركيز عند الإرسال لمنع فتح الكيبورد/الشاشة الافتراضية
 
-try{
-const res = await sendToWorker({messages: historyMessages.concat([{role:'user', content: txt}])});
-typing.remove();
-if(!res || !res.ok){
-append('bot', 'النت فاصل ولا في مشكلة في السيرفر 😅');
-} else {
-const j = await res.json().catch(()=> ({}));
-const reply = j.text || j.reply || 'مش فاهمك قوي 😅 جرب تاني';
-append('bot', reply);
-historyMessages.push({role:'user', content: txt}, {role:'assistant', content: reply});
-if(!timerStarted && historyMessages.length >= 2){
-startTimer();
-}
-}
-}catch(e){
+  try{
+    // أرسل آخر خصم رسمي معروف للـ worker علشان يبني عليه
+    const payload = {
+      messages: historyMessages.concat([{role:'user', content: txt}]),
+      last_official_discount: lastDiscountPercent !== null ? lastDiscountPercent : null
+    };
+
+    const res = await sendToWorker(payload);
+    typing.remove();
+    if(!res || !res.ok){
+      append('bot', 'النت فاصل ولا في مشكلة في السيرفر 😅');
+    } else {
+      const j = await res.json().catch(()=> ({}));
+      const reply = j.text || j.reply || 'مش فاهمك قوي 😅 جرب تاني';
+
+      // **هنا نحدث المتغير من الحقل الرسمي المرجع في الرد** (لو الوركر رجع واحد)
+      if (typeof j.last_official_discount !== 'undefined' && j.last_official_discount !== null) {
+        const parsed = Number(j.last_official_discount);
+        if (!Number.isNaN(parsed)) lastDiscountPercent = Math.round(parsed);
+      }
+
+      append('bot', reply);
+      historyMessages.push({role:'user', content: txt}, {role:'assistant', content: reply});
+
+      // لو الموديل كتب "عرض: X%" داخل النص، فانكشن extractDiscount هيحدّث lastDiscountPercent تلقائياً لأن append يستدعيه.
+      if(!timerStarted && historyMessages.length >= 2){
+        startTimer();
+      }
+    }
+  }catch(e){
+
 try{ typing.remove(); }catch(_){}
 append('bot', 'النت فاصل ولا إيه؟ 😅');
 } finally {
