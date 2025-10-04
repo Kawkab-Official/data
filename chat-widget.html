@@ -100,8 +100,6 @@ let historyMessages=[],lastOfferPercent=null,finalized=false,timerStarted=false,
 
 openBtn.onclick=()=>{overlay.style.display='flex';document.body.style.overflow='hidden';};
 closeBtn.onclick=()=>{overlay.style.display='none';document.body.style.overflow='';};
-// بدل closeBtn.onclick = () => { overlay.style.display='none'; ... }
-// استخدم:
 
 function safeText(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function append(who,text){const w=document.createElement('div');w.className='msg '+(who==='user'?'user':'bot');const b=document.createElement('div');b.className='bubble';b.innerHTML=safeText(text);w.appendChild(b);const m=document.createElement('div');m.className='meta';m.textContent=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});w.appendChild(m);area.appendChild(w);area.scrollTop=area.scrollHeight;}
