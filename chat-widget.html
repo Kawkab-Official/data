@@ -24,12 +24,15 @@ html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;over
 
 .chat-fab {
 position:fixed;
-bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+bottom:calc(70px + env(safe-area-inset-bottom, 0px)); /* تم تعديل هذا السطر لرفع الزر 50 بيكسل */
 right:20px;
 z-index:9999;
 width:60px;height:60px;border-radius:50%;
 background:linear-gradient(135deg,#2d2d2d,#1a1a1a);
-display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;
+display:flex;align-items:center;justify-content:center;
+color:#fff;
+font-size:14px; /* تم تعديل حجم الخط ليتناسب مع كلمة "فصال" */
+font-weight:700;
 cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);
 transition:transform .25s,opacity .25s;
 }
@@ -327,15 +330,13 @@ max-height:800px;
 border-radius:16px;
 box-shadow:0 20px 60px rgba(0,0,0,0.3);
 }
-.chat-fab{right:28px;bottom:28px}
+.chat-fab{right:28px;bottom:78px} /* تم تعديل هذا السطر ليتناسب مع media query */
 }
 </style>
 </head>
 <body>
 
-<div class="chat-fab" id="openChat" role="button" aria-label="افتح الشات">💬</div>
-
-<div class="chat-overlay" id="chatOverlay" aria-hidden="true">
+<div class="chat-fab" id="openChat" role="button" aria-label="افتح الشات">فصال</div> <div class="chat-overlay" id="chatOverlay" aria-hidden="true">
 <div class="chat-box" role="dialog" aria-modal="true" aria-label="بوت كوكب">
 <div class="header">
 <div class="title">بوت كوكب — فصال مباشر</div>
@@ -381,7 +382,7 @@ let historyMessages = [], chatOpened = false, finalized = false;
 let timerInterval = null;
 let timeRemaining = 60;
 let timerStarted = false;
-let lastDiscountPercent = null;
+let lastDiscountPercent = null; // متغير لحفظ آخر نسبة خصم تم ذكرها
 
 function postToParent(action){
 try{
@@ -403,10 +404,17 @@ area.scrollTop = area.scrollHeight;
 });
 }
 
+// وظيفة لاستخلاص نسبة الخصم من رسالة البوت
 function extractDiscount(text){
+// يبحث عن نمط: عرض: رقم%
 const match = text.match(/عرض:\s*(\d+)%/);
 if(match && match[1]){
 return parseInt(match[1], 10);
+}
+// يمكن إضافة أنماط أخرى هنا إن لزم الأمر (مثل "خصم X%")
+const match2 = text.match(/خصم\s*(\d+)%/);
+if(match2 && match2[1]){
+return parseInt(match2[1], 10);
 }
 return null;
 }
@@ -416,18 +424,23 @@ const w = document.createElement('div');
 w.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
 const b = document.createElement('div');
 b.className = isResult ? 'result-msg' : 'bubble';
+
+if(who === 'bot' && !isResult){
+const discount = extractDiscount(text);
+if(discount !== null){
+lastDiscountPercent = discount; // حفظ آخر نسبة خصم
+}
+}
+
 if(isResult){
+// يتم استخدام النص المرسل كنتيجة نهائية
 b.innerHTML = `<div class="result-title">🎉 مبروك! خصمك النهائي</div><div class="result-value">${safeText(text)}</div>`;
 } else {
 b.innerHTML = safeText(text);
-if(who === 'bot'){
-const discount = extractDiscount(text);
-if(discount !== null){
-lastDiscountPercent = discount;
 }
-}
-}
+
 w.appendChild(b);
+
 if(!isResult){
 const m = document.createElement('div');
 m.className = 'meta';
@@ -480,9 +493,14 @@ stopTimer();
 btn.disabled = true;
 inp.disabled = true;
 quick.style.display = 'none';
+
+// يتم تحديد الخصم النهائي
+// إذا كان lastDiscountPercent يحمل قيمة، نستخدمها. وإلا، نستخدم 5 كقيمة افتراضية.
 const finalDiscount = lastDiscountPercent !== null ? lastDiscountPercent : 5;
+const finalDiscountText = `${finalDiscount}%`;
+
 setTimeout(()=>{
-append('bot', `${finalDiscount}%`, true);
+append('bot', finalDiscountText, true); // عرض النتيجة النهائية
 setTimeout(()=>{
 append('bot', 'شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊');
 }, 1000);
