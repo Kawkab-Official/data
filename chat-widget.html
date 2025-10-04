@@ -20,11 +20,6 @@ body{
 font-family:"Tahoma",system-ui;
 background:transparent;
 overflow:hidden;
-margin:0;
-padding:0;
-width:100%;
-height:100%;
-position:fixed;
 }
 
 .chat-fab {
@@ -56,23 +51,25 @@ right:0;
 bottom:0;
 background:rgba(0,0,0,0.5);
 display:none;
+justify-content:center;
+align-items:center;
 z-index:10000;
-padding:0;
-margin:0;
+overflow:hidden;
 }
-.chat-overlay.show{display:block;}
+.chat-overlay.show{display:flex;}
 
 .chat-box {
 width:100%;
 height:100%;
-max-height:100vh;
-max-height:100dvh;
+max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 background:var(--card);
 display:flex;
 flex-direction:column;
 position:relative;
 animation:fadeIn .3s;
 overflow:hidden;
+margin:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 @keyframes fadeIn {from{opacity:0;}to{opacity:1;}}
 
@@ -87,39 +84,51 @@ position:sticky;
 top:0;
 z-index:100;
 }
-.header .title{flex:1;font-weight:700;}
+.header .title{flex:1;font-weight:700;font-size:16px;}
 .header .close {
 cursor:pointer;
-font-size:22px;
+font-size:28px;
 background:none;
 border:none;
 color:#fff;
+width:32px;
+height:32px;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:0;
 }
 
 .area {
-flex:1; 
-padding:12px; 
-overflow-y:auto; 
+flex:1;
+padding:12px;
+overflow-y:auto;
 overflow-x:hidden;
-display:flex; 
-flex-direction:column; 
+display:flex;
+flex-direction:column;
 gap:6px;
 min-height:0;
 -webkit-overflow-scrolling:touch;
 }
 .controls{
-padding:8px;
+padding:8px 12px 12px 12px;
+padding-bottom:max(12px, env(safe-area-inset-bottom));
 border-top:1px solid #eee;
 display:flex;
 flex-direction:column;
 gap:6px;
 flex-shrink:0;
 background:var(--card);
-position:sticky;
-bottom:0;
 }
 .input{display:flex;gap:8px;align-items:center;}
-.input input{flex:1;padding:10px;border-radius:14px;border:1px solid #e6eef6;font-size:14px;}
+.input input{
+flex:1;
+padding:10px;
+border-radius:14px;
+border:1px solid #e6eef6;
+font-size:14px;
+min-width:0;
+}
 .btn{padding:10px 14px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer;}
 .quick{display:flex;gap:6px;flex-wrap:wrap;}
 .quick button{flex:1;padding:8px;border-radius:12px;border:1px dashed #ccc;background:transparent;font-size:13px;cursor:pointer;color:var(--accent);}
@@ -135,6 +144,26 @@ bottom:0;
 .typing span:nth-child(2){animation-delay:.2s}
 .typing span:nth-child(3){animation-delay:.4s}
 @keyframes dot{0%,100%{opacity:.3;transform:translateY(0);}50%{opacity:1;transform:translateY(-3px);}}
+
+@media (max-width:768px) {
+.chat-box {
+max-height:100vh;
+max-height:100svh;
+margin:0;
+}
+.controls {
+padding-bottom:max(16px, env(safe-area-inset-bottom));
+}
+.area {
+padding-bottom:20px;
+}
+}
+
+@supports (height: 100dvh) {
+.chat-overlay {
+height:100dvh;
+}
+}
 </style>
 </head>
 <body>
@@ -179,6 +208,15 @@ openBtn.onclick=()=>{
 try{
 overlay.classList.add('show');
 openBtn.classList.add('hidden');
+
+// ظبط ارتفاع الشات حسب الشاشة الفعلية
+const adjustHeight=()=>{
+const vh=window.innerHeight;
+overlay.style.height=vh+'px';
+};
+adjustHeight();
+window.addEventListener('resize',adjustHeight);
+
 if(!chatOpened){
 append('bot','أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎');
 chatOpened=true;
@@ -214,8 +252,7 @@ m.textContent=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-di
 w.appendChild(m);
 area.appendChild(w);
 setTimeout(()=>{
-area.scrollTop=area.scrollHeight;
-w.scrollIntoView({behavior:'smooth',block:'end'});
+area.scrollTo({top:area.scrollHeight,behavior:'smooth'});
 },100);
 }
 
@@ -225,8 +262,7 @@ el.className='msg bot';
 el.innerHTML='<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
 area.appendChild(el);
 setTimeout(()=>{
-area.scrollTop=area.scrollHeight;
-el.scrollIntoView({behavior:'smooth',block:'end'});
+area.scrollTo({top:area.scrollHeight,behavior:'smooth'});
 },100);
 return el;
 }
@@ -260,11 +296,12 @@ inp.onkeydown=e=>{if(e.key==='Enter')sendMessage();};
 quick.onclick=e=>{if(e.target.tagName==='BUTTON'){inp.value=e.target.dataset.text;inp.focus();}}
 inp.addEventListener('focus',()=>{
 setTimeout(()=>{
-const msgs=area.querySelectorAll('.msg');
-if(msgs.length>0){
-msgs[msgs.length-1].scrollIntoView({behavior:'smooth',block:'end'});
-}
-},400);
+// scroll للرسايل
+area.scrollTo({top:area.scrollHeight,behavior:'smooth'});
+// تأكد إن الـ input ظاهر
+inp.scrollIntoView({behavior:'smooth',block:'nearest'});
+window.scrollTo(0,0);
+},300);
 });
 })();
 </script>
