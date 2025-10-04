@@ -45,13 +45,24 @@ backdrop-filter: blur(6px);
 
 .chat-box {
 width:100%;
-height:100%;
-max-height:100dvh;
+height:100vh;
+height:100dvh;
 background:var(--card);
 display:flex;flex-direction:column;position:relative;
-border-radius:12px 12px 0 0;
+border-radius:0;
 overflow:hidden;
 box-shadow:0 10px 30px rgba(2,6,23,0.12);
+}
+
+@media (max-width:699px){
+.chat-box {
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+border-radius:0;
+}
 }
 
 .header {
@@ -69,21 +80,32 @@ flex:1;
 padding:12px;
 overflow-y:auto;
 overflow-x:hidden;
-display:flex;flex-direction:column;gap:8px;min-height:0;
+display:flex;flex-direction:column;gap:8px;
+min-height:0;
 -webkit-overflow-scrolling:touch;
 scroll-behavior:smooth;
 padding-bottom:20px;
+margin-bottom:env(safe-area-inset-bottom, 0px);
 }
 
 .controls{
 padding:10px 12px;
-padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px) + 8px);
+padding-bottom:max(20px, env(safe-area-inset-bottom, 0px));
 border-top:1px solid #eee;
 display:flex;flex-direction:column;gap:8px;
 flex-shrink:0;
 background:var(--card);
-position:relative;
-z-index:10;
+position:sticky;
+bottom:0;
+z-index:100;
+min-height:120px;
+}
+
+@media (max-width:699px){
+.controls{
+padding-bottom:max(28px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+min-height:130px;
+}
 }
 
 .input{display:flex;gap:8px;align-items:center}
@@ -109,11 +131,21 @@ flex:1;padding:12px;border-radius:14px;border:1px solid #e6eef6;font-size:14px;m
 @media (min-width:700px){
 .chat-box{width:640px;border-radius:14px;height:90vh;max-height:800px;}
 .chat-fab{right:28px;bottom:28px}
+.controls{
+padding-bottom:16px;
+min-height:auto;
+}
 }
 
 @supports(height: 100dvh) {
 .chat-box {
 height: 100dvh;
+}
+}
+
+@supports(padding: max(0px)) {
+.controls {
+padding-bottom: max(20px, env(safe-area-inset-bottom));
 }
 }
 </style>
@@ -231,7 +263,7 @@ overlay.classList.add('show');
 overlay.setAttribute('aria-hidden', 'false');
 openBtn.classList.add('hidden');
 if(!chatOpened){
-append('bot', 'أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎');
+append('bot', 'أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه لولو؟ 😎');
 chatOpened = true;
 }
 postToParent('chatOpened');
