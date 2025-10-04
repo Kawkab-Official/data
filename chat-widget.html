@@ -14,7 +14,6 @@
 --bot-bg:#fff8e6;
 --muted:#667085;
 --radius:16px;
---vh:1vh;
 }
 
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -35,86 +34,101 @@ transition:transform .25s,opacity .25s;
 .chat-fab.hidden{opacity:0;pointer-events:none}
 
 .chat-overlay {
-position:fixed;inset:0;
-display:none;align-items:center;justify-content:center;
-background:rgba(0,0,0,0.45);z-index:10000;
--webkit-backdrop-filter: blur(6px);
-backdrop-filter: blur(6px);
-}
-.chat-overlay.show{display:flex}
-
-.chat-box {
-width:100%;
-height:100vh;
-height:100dvh;
-background:var(--card);
-display:flex;flex-direction:column;position:relative;
-border-radius:0;
-overflow:hidden;
-box-shadow:0 10px 30px rgba(2,6,23,0.12);
-}
-
-@media (max-width:699px){
-.chat-box {
 position:fixed;
 top:0;
 left:0;
 right:0;
 bottom:0;
-border-radius:0;
+display:none;
+background:rgba(0,0,0,0.45);
+z-index:10000;
+-webkit-backdrop-filter: blur(6px);
+backdrop-filter: blur(6px);
 }
+.chat-overlay.show{display:block}
+
+.chat-box {
+position:absolute;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:var(--card);
+display:grid;
+grid-template-rows: auto 1fr auto;
+overflow:hidden;
 }
 
 .header {
 background:linear-gradient(90deg,var(--accent),var(--accent-2));
 color:#fff;
-padding:calc(12px + env(safe-area-inset-top,0px)) 12px 12px;
-display:flex;align-items:center;flex-shrink:0;
-position:relative;z-index:100;
+padding:12px;
+padding-top:calc(12px + env(safe-area-inset-top,0px));
+display:flex;
+align-items:center;
 }
 .header .title{flex:1;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .header .close{cursor:pointer;font-size:28px;background:none;border:none;color:#fff;width:36px;height:36px;display:flex;align-items:center;justify-content:center;padding:0}
 
 .area{
-flex:1;
-padding:12px;
 overflow-y:auto;
 overflow-x:hidden;
-display:flex;flex-direction:column;gap:8px;
-min-height:0;
+padding:12px;
+display:flex;
+flex-direction:column;
+gap:8px;
 -webkit-overflow-scrolling:touch;
 scroll-behavior:smooth;
-padding-bottom:20px;
-margin-bottom:env(safe-area-inset-bottom, 0px);
 }
 
 .controls{
-padding:10px 12px;
-padding-bottom:max(20px, env(safe-area-inset-bottom, 0px));
-border-top:1px solid #eee;
-display:flex;flex-direction:column;gap:8px;
-flex-shrink:0;
 background:var(--card);
-position:sticky;
-bottom:0;
-z-index:100;
-min-height:120px;
+border-top:1px solid #eee;
+padding:12px;
+padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+display:flex;
+flex-direction:column;
+gap:10px;
 }
 
+/* حل خاص للموبايل - نضمن إن الـ controls فوق كل حاجة */
 @media (max-width:699px){
 .controls{
-padding-bottom:max(28px, calc(env(safe-area-inset-bottom, 0px) + 16px));
-min-height:130px;
+padding-bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+box-shadow:0 -4px 12px rgba(0,0,0,0.08);
 }
 }
 
-.input{display:flex;gap:8px;align-items:center}
+.input{display:flex;gap:8px;align-items:stretch}
 .input input{
-flex:1;padding:12px;border-radius:14px;border:1px solid #e6eef6;font-size:14px;min-width:0;
+flex:1;
+padding:14px;
+border-radius:14px;
+border:1px solid #e6eef6;
+font-size:15px;
+min-width:0;
+background:#fff;
 }
-.btn{padding:10px 14px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+.btn{
+padding:12px 18px;
+border-radius:14px;
+border:none;
+background:var(--accent);
+color:#fff;
+cursor:pointer;
+font-weight:600;
+min-width:70px;
+}
 .quick{display:flex;gap:8px;flex-wrap:wrap}
-.quick button{padding:8px;border-radius:12px;border:1px dashed #ccc;background:transparent;font-size:13px;cursor:pointer;color:var(--accent)}
+.quick button{
+padding:10px 14px;
+border-radius:12px;
+border:1px dashed #ccc;
+background:transparent;
+font-size:13px;
+cursor:pointer;
+color:var(--accent);
+}
 
 .msg{display:flex;max-width:85%;flex-direction:column;word-break:break-word}
 .msg.user{align-self:flex-end}
@@ -129,24 +143,21 @@ flex:1;padding:12px;border-radius:14px;border:1px solid #e6eef6;font-size:14px;m
 @keyframes dot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
 
 @media (min-width:700px){
-.chat-box{width:640px;border-radius:14px;height:90vh;max-height:800px;}
+.chat-overlay{
+display:none;
+align-items:center;
+justify-content:center;
+}
+.chat-overlay.show{display:flex}
+.chat-box{
+position:relative;
+width:640px;
+height:90vh;
+max-height:800px;
+border-radius:14px;
+box-shadow:0 10px 30px rgba(2,6,23,0.12);
+}
 .chat-fab{right:28px;bottom:28px}
-.controls{
-padding-bottom:16px;
-min-height:auto;
-}
-}
-
-@supports(height: 100dvh) {
-.chat-box {
-height: 100dvh;
-}
-}
-
-@supports(padding: max(0px)) {
-.controls {
-padding-bottom: max(20px, env(safe-area-inset-bottom));
-}
 }
 </style>
 </head>
@@ -179,17 +190,6 @@ padding-bottom: max(20px, env(safe-area-inset-bottom));
 (function(){
 'use strict';
 
-function setVh(){
-let vh = window.innerHeight * 0.01;
-document.documentElement.style.setProperty('--vh', vh + 'px');
-}
-
-setVh();
-window.addEventListener('resize', setVh);
-window.addEventListener('orientationchange', function(){
-setTimeout(setVh, 300);
-});
-
 const openBtn = document.getElementById('openChat');
 const overlay = document.getElementById('chatOverlay');
 const closeBtn = document.getElementById('closeChat');
@@ -218,9 +218,7 @@ return d.innerHTML;
 
 function scrollToBottom(){
 requestAnimationFrame(()=>{
-if(area.lastElementChild){
-area.lastElementChild.scrollIntoView({behavior:'smooth', block:'end'});
-}
+area.scrollTop = area.scrollHeight;
 });
 }
 
@@ -250,27 +248,36 @@ scrollToBottom();
 return el;
 }
 
+// التأكد من ظهور الـ input لما يفتح الكيبورد
 inp.addEventListener('focus', ()=>{
-setTimeout(scrollToBottom, 400);
+setTimeout(()=>{
+inp.scrollIntoView({behavior:'smooth', block:'nearest'});
+scrollToBottom();
+}, 300);
 });
 
-window.visualViewport?.addEventListener('resize', ()=>{
-setTimeout(scrollToBottom, 100);
+// مراقبة تغيير حجم الشاشة (الكيبورد)
+if(window.visualViewport){
+window.visualViewport.addEventListener('resize', ()=>{
+setTimeout(()=>{
+inp.scrollIntoView({behavior:'smooth', block:'nearest'});
+}, 150);
 });
+}
 
 function openChat(){
 overlay.classList.add('show');
 overlay.setAttribute('aria-hidden', 'false');
 openBtn.classList.add('hidden');
 if(!chatOpened){
-append('bot', 'أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه لولو؟ 😎');
+append('bot', 'أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيههههههههه؟ 😎');
 chatOpened = true;
 }
 postToParent('chatOpened');
 setTimeout(()=>{
-inp.focus();
 scrollToBottom();
-}, 500);
+inp.focus();
+}, 400);
 }
 
 function closeChat(){
@@ -278,6 +285,7 @@ overlay.classList.remove('show');
 overlay.setAttribute('aria-hidden', 'true');
 openBtn.classList.remove('hidden');
 postToParent('chatClosed');
+inp.blur();
 setTimeout(()=> openBtn.focus(), 200);
 }
 
@@ -338,13 +346,6 @@ inp.focus();
 }
 });
 
-const mo = new MutationObserver(()=>{
-const threshold = 120;
-const nearBottom = (area.scrollHeight - area.scrollTop - area.clientHeight) < threshold;
-if(nearBottom) scrollToBottom();
-});
-mo.observe(area, {childList:true, subtree:false});
-
 window.addEventListener('message', (ev)=>{
 if(!ev.data || typeof ev.data.action !== 'string') return;
 if(ev.data.action === 'closeChat') closeChat();
@@ -358,10 +359,8 @@ if(e.key === 'Escape' && overlay.classList.contains('show')) closeChat();
 });
 
 overlay.addEventListener('touchmove', (e)=>{
-e.stopPropagation();
+if(e.target === overlay) e.preventDefault();
 }, {passive:false});
-
-setTimeout(scrollToBottom, 200);
 
 window.__KAWKAB_CHAT = {
 open: openChat,
