@@ -21,17 +21,6 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;overflow:hidden}
 
-  .chat-input {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #fff;
-  padding: 10px;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 20px); /* زودنا الـ 20px */
-  box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
-}
-
 /* Floating button (داخل الـ iframe) */
 .chat-fab {
   position:fixed;
@@ -54,6 +43,10 @@ html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;over
   background:rgba(0,0,0,0.45);z-index:10000;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
+}
+
+  .controls {
+  transition: transform 0.25s ease;
 }
 
 /* show */
@@ -336,6 +329,30 @@ html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;over
       inp.value = e.target.dataset.text || '';
       inp.focus();
     }
+
+  // ===== حل مشكلة الكيبورد على الموبايل =====
+  const controls = document.querySelector('.controls');
+
+  function adjustForKeyboard() {
+    if (!window.visualViewport) return;
+    const vv = window.visualViewport;
+    const kbHeight = window.innerHeight - vv.height - vv.offsetTop;
+
+    if (kbHeight > 0) {
+      // الكيبورد ظاهر -> نرفع الـ controls فوقه
+      controls.style.transform = `translateY(-${kbHeight}px)`;
+    } else {
+      // الكيبورد مقفول -> نرجع للوضع الطبيعي
+      controls.style.transform = '';
+    }
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', adjustForKeyboard);
+    window.visualViewport.addEventListener('scroll', adjustForKeyboard);
+  }
+
+    
   });
 
   // ensure that new messages keep visible on DOM changes (MutationObserver)
