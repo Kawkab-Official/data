@@ -23,11 +23,20 @@ body{font-family:"Tahoma",system-ui;background:var(--bg);overflow-x:hidden;}
   transition:transform .3s;
 }
 .chat-fab:hover{transform:scale(1.1);}
+
+/* التعديل هنا */
 .chat-overlay {
   position:fixed; inset:0; background:rgba(0,0,0,0.5);
-  display:none; justify-content:center; align-items:center;
+  display:flex; justify-content:center; align-items:center;
   z-index:10000;
+  opacity:0; pointer-events:none;
+  transition:opacity .3s ease;
 }
+.chat-overlay.active {
+  opacity:1; pointer-events:auto;
+}
+/* نهاية التعديل */
+
 .chat-box {
   width:100%; height:100%;
   background:var(--card); display:flex; flex-direction:column;
@@ -96,29 +105,74 @@ const inp=document.getElementById('inp');
 const btn=document.getElementById('btn');
 const quick=document.getElementById('quickActions');
 const WORKER_URL='https://kawkab.kawkab-arabia.workers.dev/';
-let historyMessages=[],lastOfferPercent=null,finalized=false,timerStarted=false,timeLeft=60,countdownId=null;
+let historyMessages=[],finalized=false;
 
-openBtn.onclick=()=>{overlay.style.display='flex';document.body.style.overflow='hidden';};
-closeBtn.onclick=()=>{overlay.style.display='none';document.body.style.overflow='';};
+openBtn.onclick=()=>{
+  overlay.classList.add('active');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>area.scrollTop=area.scrollHeight,100);
+};
+closeBtn.onclick=()=>{
+  overlay.classList.remove('active');
+  document.body.style.overflow='';
+};
 
 function safeText(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function append(who,text){const w=document.createElement('div');w.className='msg '+(who==='user'?'user':'bot');const b=document.createElement('div');b.className='bubble';b.innerHTML=safeText(text);w.appendChild(b);const m=document.createElement('div');m.className='meta';m.textContent=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});w.appendChild(m);area.appendChild(w);area.scrollTop=area.scrollHeight;}
-function showTyping(){const el=document.createElement('div');el.className='msg bot';el.innerHTML='<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';area.appendChild(el);area.scrollTop=area.scrollHeight;return el;}
-async function sendToWorker(payload){return await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}
-async function sendMessage(){const txt=inp.value.trim();if(!txt||finalized)return;append('user',txt);inp.value='';const typing=showTyping();btn.disabled=true;
-try{
-const res=await sendToWorker({messages:historyMessages.concat([{role:'user',content:txt}])});
-typing.remove();
-const j=await res.json();
-const reply=j.text||'مش فاهمك قوي 😅 جرب تاني';
-append('bot',reply);
-historyMessages.push({role:'user',content:txt},{role:'assistant',content:reply});
-}catch(e){typing.remove();append('bot','النت فاصل ولا إيه؟ 😅');}
-btn.disabled=false;inp.focus();}
+function append(who,text){
+  const w=document.createElement('div');
+  w.className='msg '+(who==='user'?'user':'bot');
+  const b=document.createElement('div');
+  b.className='bubble';
+  b.innerHTML=safeText(text);
+  w.appendChild(b);
+  const m=document.createElement('div');
+  m.className='meta';
+  m.textContent=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+  w.appendChild(m);
+  area.appendChild(w);
+  area.scrollTop=area.scrollHeight;
+}
+function showTyping(){
+  const el=document.createElement('div');
+  el.className='msg bot';
+  el.innerHTML='<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  area.appendChild(el);
+  area.scrollTop=area.scrollHeight;
+  return el;
+}
+async function sendToWorker(payload){
+  return await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+}
+async function sendMessage(){
+  const txt=inp.value.trim();
+  if(!txt||finalized)return;
+  append('user',txt);
+  inp.value='';
+  const typing=showTyping();
+  btn.disabled=true;
+  try{
+    const res=await sendToWorker({messages:historyMessages.concat([{role:'user',content:txt}])});
+    typing.remove();
+    const j=await res.json();
+    const reply=j.text||'مش فاهمك قوي 😅 جرب تاني';
+    append('bot',reply);
+    historyMessages.push({role:'user',content:txt},{role:'assistant',content:reply});
+  }catch(e){
+    typing.remove();
+    append('bot','النت فاصل ولا إيه؟ 😅');
+  }
+  btn.disabled=false;
+  inp.focus();
+}
 btn.onclick=sendMessage;
 inp.onkeydown=e=>{if(e.key==='Enter')sendMessage();};
-quick.onclick=e=>{if(e.target.tagName==='BUTTON'){inp.value=e.target.dataset.text;inp.focus();}}
-inp.addEventListener('focus',()=>{setTimeout(()=>{area.scrollTop=area.scrollHeight;},300);});
+quick.onclick=e=>{
+  if(e.target.tagName==='BUTTON'){
+    inp.value=e.target.dataset.text;
+    inp.focus();
+  }
+}
+inp.addEventListener('focus',()=>{setTimeout(()=>area.scrollTop=area.scrollHeight,300);});
 append('bot','أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎');
 })();
 </script>
