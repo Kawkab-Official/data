@@ -74,6 +74,7 @@ align-items:center;
 overflow-y:auto;
 overflow-x:hidden;
 padding:12px;
+padding-bottom:40px;
 display:flex;
 flex-direction:column;
 gap:8px;
@@ -85,17 +86,18 @@ scroll-behavior:smooth;
 background:var(--card);
 border-top:1px solid #eee;
 padding:12px;
-padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+padding-bottom:80px;
 display:flex;
 flex-direction:column;
 gap:10px;
+box-shadow:0 -4px 12px rgba(0,0,0,0.08);
 }
 
-/* حل خاص للموبايل - نضمن إن الـ controls فوق كل حاجة */
-@media (max-width:699px){
+/* على الديسكتوب نرجع للـ padding العادي */
+@media (min-width:700px){
 .controls{
-padding-bottom:calc(20px + env(safe-area-inset-bottom, 0px));
-box-shadow:0 -4px 12px rgba(0,0,0,0.08);
+padding-bottom:16px;
+box-shadow:none;
 }
 }
 
@@ -270,7 +272,7 @@ overlay.classList.add('show');
 overlay.setAttribute('aria-hidden', 'false');
 openBtn.classList.add('hidden');
 if(!chatOpened){
-append('bot', 'أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيههههههههه؟ 😎');
+append('bot', 'أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎');
 chatOpened = true;
 }
 postToParent('chatOpened');
