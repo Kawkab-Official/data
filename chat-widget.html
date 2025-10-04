@@ -51,7 +51,7 @@ html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;over
 /* صندوق الشات - نستخدم vh ديناميكي */
 .chat-box {
   width:100%;
-  height:calc(var(--vh) * 100);
+  height: 100dvh; /* بدل var(--vh) أو 100vh */
   max-height:100dvh;
   background:var(--card);
   display:flex;flex-direction:column;position:relative;
@@ -81,6 +81,9 @@ html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;over
 
 /* عناصر التحكم في الأسفل - نأخذ safe-area-inset-bottom */
 .controls {
+  position: sticky;
+  bottom: 0;
+  z-index: 200;
   padding:10px 12px calc(20px + env(safe-area-inset-bottom,0px));
   border-top:1px solid #eee;
   display:flex;
@@ -89,7 +92,6 @@ html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;over
   flex-shrink:0;
   background:var(--card);
   position:sticky;
-  bottom:0;
 }
 
 .input{display:flex;gap:8px;align-items:center}
@@ -289,6 +291,11 @@ html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;over
       throw e;
     }
   }
+inp.addEventListener('focus', () => {
+  setTimeout(() => {
+    inp.scrollIntoView({behavior: 'smooth', block: 'center'});
+  }, 300);
+});
 
   // send message flow
   async function sendMessage(){
