@@ -1,348 +1,269 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <title>بوت كوكب — فصال مباشر</title>
-  <style>
-    :root{
-      --accent:#0f1724;
-      --accent-2:#0ea5a4;
-      --bg:#f7fbff;
-      --card:#ffffff;
-      --user-bg:#dff7ff;
-      --bot-bg:#fff8e6;
-      --muted:#667085;
-      --radius:16px;
-      --vh:1vh;
-    }
-    *{box-sizing:border-box;margin:0;padding:0;}
-    html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;overflow:hidden}
-    
-    .chat-fab {
-      position:fixed;
-      bottom:calc(20px + env(safe-area-inset-bottom, 0px));
-      right:20px;
-      z-index:9999;
-      width:60px;height:60px;border-radius:50%;
-      background:linear-gradient(135deg,var(--accent-2),var(--accent));
-      display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;
-      cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.18);
-      transition:transform .25s,opacity .25s;
-    }
-    .chat-fab:hover{transform:scale(1.05)}
-    .chat-fab.hidden{opacity:0;pointer-events:none}
-    
-    .chat-overlay {
-      position:fixed;inset:0;
-      display:none;align-items:center;justify-content:center;
-      background:rgba(0,0,0,0.45);z-index:10000;
-      -webkit-backdrop-filter: blur(6px);
-      backdrop-filter: blur(6px);
-    }
-    .chat-overlay.show{display:flex}
-    
-    .chat-box {
-      width:100%;
-      height:calc(var(--vh) * 100);
-      max-height:100dvh;
-      background:var(--card);
-      display:flex;flex-direction:column;position:relative;
-      border-radius:12px 12px 0 0;
-      overflow:hidden;
-      box-shadow:0 10px 30px rgba(2,6,23,0.12);
-      padding-bottom:env(safe-area-inset-bottom,0px);
-    }
-    
-    .header {
-      background:linear-gradient(90deg,var(--accent),var(--accent-2));
-      color:#fff;padding:12px 12px;
-      display:flex;align-items:center;flex-shrink:0;
-      position:sticky;top:env(safe-area-inset-top,0px);z-index:100;
-      padding-top:calc(12px + env(safe-area-inset-top,0px));
-    }
-    .header .title{flex:1;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .header .close{cursor:pointer;font-size:28px;background:none;border:none;color:#fff;width:36px;height:36px;display:flex;align-items:center;justify-content:center;padding:0}
-    
-    .area{
-      flex:1;
-      padding:12px;
-      overflow-y:auto;
-      overflow-x:hidden;
-      display:flex;flex-direction:column;gap:8px;min-height:0;
-      -webkit-overflow-scrolling:touch;
-      scroll-behavior:smooth;
-    }
-    
-    .controls{
-      padding:10px 12px;
-      padding-bottom:max(12px, env(safe-area-inset-bottom,0px));
-      border-top:1px solid #eee;display:flex;flex-direction:column;gap:8px;flex-shrink:0;background:var(--card);
-      position:relative;
-      min-height:calc(64px + env(safe-area-inset-bottom,0px));
-    }
-    .input{display:flex;gap:8px;align-items:center}
-    .input input{
-      flex:1;padding:10px;border-radius:14px;border:1px solid #e6eef6;font-size:16px;min-width:0;
-    }
-    .btn{padding:10px 14px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer}
-    .quick{display:flex;gap:8px;flex-wrap:wrap}
-    .quick button{padding:8px;border-radius:12px;border:1px dashed #ccc;background:transparent;font-size:13px;cursor:pointer;color:var(--accent)}
-    
-    .msg{display:flex;max-width:85%;flex-direction:column;word-break:break-word}
-    .msg.user{align-self:flex-end}
-    .msg.user .bubble{background:var(--user-bg);border-radius:16px 16px 0 16px;padding:10px 14px}
-    .msg.bot{align-self:flex-start}
-    .msg.bot .bubble{background:var(--bot-bg);border-radius:16px 16px 16px 0;padding:10px 14px}
-    .meta{font-size:11px;color:var(--muted);margin-top:4px;text-align:right}
-    
-    .typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;display:inline-block;animation:dot 1s infinite}
-    .typing span:nth-child(2){animation-delay:.18s}
-    .typing span:nth-child(3){animation-delay:.36s}
-    @keyframes dot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
-    
-    @media (min-width:700px){
-      .chat-box{width:640px;border-radius:14px}
-      .chat-fab{right:28px;bottom:28px}
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>بوت كوكب — فصال مباشر</title>
+<style>
+:root{
+  --accent:#0f1724;
+  --accent-2:#0ea5a4;
+  --bg:#f7fbff;
+  --card:#ffffff;
+  --user-bg:#dff7ff;
+  --bot-bg:#fff8e6;
+  --muted:#667085;
+  --radius:16px;
+  --vh:1vh; /* سيتم تحديثه عبر JS */
+}
+
+/* reset */
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;overflow:hidden}
+
+/* Floating button */
+.chat-fab {
+  position:fixed;
+  bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+  right:20px;
+  z-index:9999;
+  width:60px;height:60px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent-2),var(--accent));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;
+  cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.18);
+  transition:transform .25s,opacity .25s;
+}
+.chat-fab:hover{transform:scale(1.05)}
+.chat-fab.hidden{opacity:0;pointer-events:none}
+
+/* overlay */
+.chat-overlay {
+  position:fixed;inset:0;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.45);z-index:10000;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.chat-overlay.show{display:flex}
+
+/* chat box */
+.chat-box {
+  width:100%;
+  height:calc(var(--vh) * 100);
+  max-height:100dvh;
+  background:var(--card);
+  display:flex;flex-direction:column;position:relative;
+  border-radius:12px 12px 0 0;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(2,6,23,0.12);
+}
+
+/* header */
+.header {
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  color:#fff;padding:12px 12px;
+  display:flex;align-items:center;flex-shrink:0;
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:100;
+  padding-top:calc(12px + env(safe-area-inset-top,0px));
+}
+.header .title{flex:1;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header .close{cursor:pointer;font-size:28px;background:none;border:none;color:#fff;width:36px;height:36px;display:flex;align-items:center;justify-content:center;padding:0}
+
+/* area */
+.area{
+  flex:1; padding:12px; overflow-y:auto; overflow-x:hidden;
+  display:flex;flex-direction:column;gap:8px;min-height:0;
+  -webkit-overflow-scrolling:touch;
+  scroll-behavior:smooth;
+}
+
+/* controls */
+.controls{
+  padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));
+  border-top:1px solid #eee;display:flex;flex-direction:column;gap:8px;flex-shrink:0;background:var(--card);
+}
+.input{display:flex;gap:8px;align-items:center}
+.input input{
+  flex:1;padding:10px;border-radius:14px;border:1px solid #e6eef6;font-size:14px;min-width:0;
+}
+.btn{padding:10px 14px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+
+/* messages */
+.msg{display:flex;max-width:85%;flex-direction:column;word-break:break-word}
+.msg.user{align-self:flex-end}
+.msg.user .bubble{background:var(--user-bg);border-radius:16px 16px 0 16px;padding:10px 14px}
+.msg.bot{align-self:flex-start}
+.msg.bot .bubble{background:var(--bot-bg);border-radius:16px 16px 16px 0;padding:10px 14px}
+.meta{font-size:11px;color:var(--muted);margin-top:4px;text-align:right}
+
+/* typing */
+.typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;display:inline-block;animation:dot 1s infinite}
+.typing span:nth-child(2){animation-delay:.18s}
+.typing span:nth-child(3){animation-delay:.36s}
+@keyframes dot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+
+/* responsive */
+@media (min-width:700px){
+  .chat-box{width:640px;border-radius:14px}
+  .chat-fab{right:28px;bottom:28px}
+}
+</style>
 </head>
 <body>
-  <div class="chat-fab" id="openChat" role="button" aria-label="افتح الشات">💬</div>
-  
-  <div class="chat-overlay" id="chatOverlay" aria-hidden="true">
-    <div class="chat-box" role="dialog" aria-modal="true" aria-label="بوت كوكب">
-      <div class="header">
-        <div class="title">بوت كوكب — فصال مباشر</div>
-        <button class="close" id="closeChat" aria-label="اغلاق">×</button>
-      </div>
-      <div class="area" id="area" tabindex="0" aria-live="polite" aria-atomic="false"></div>
-      <div class="controls">
-        <div class="quick" id="quickActions" aria-hidden="false">
-          <button data-text="أريد أفضل عرض">أفضل عرض</button>
-          <button data-text="هل في خصم أعلى؟">خصم أعلى</button>
-          <button data-text="تمام">تمام</button>
-        </div>
-        <div class="input">
-          <input id="inp" type="text" placeholder="اكتب هنا..." aria-label="اكتب رسالتك" autocomplete="off" />
-          <button id="btn" class="btn" aria-label="أرسل">أرسل</button>
-        </div>
+
+<!-- Floating button -->
+<div class="chat-fab" id="openChat" role="button" aria-label="افتح الشات">💬</div>
+
+<!-- Overlay -->
+<div class="chat-overlay" id="chatOverlay" aria-hidden="true">
+  <div class="chat-box" role="dialog" aria-modal="true" aria-label="بوت كوكب">
+    <div class="header">
+      <div class="title">بوت كوكب — فصال مباشر</div>
+      <button class="close" id="closeChat" aria-label="اغلاق">×</button>
+    </div>
+
+    <div class="area" id="area" tabindex="0" aria-live="polite" aria-atomic="false"></div>
+
+    <div class="controls">
+      <div class="input">
+        <input id="inp" type="text" placeholder="اكتب هنا..." aria-label="اكتب رسالتك" autocomplete="off" />
+        <button id="btn" class="btn" aria-label="أرسل">أرسل</button>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-  (function(){
-    'use strict';
-    
-    function setVh(){
-      document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+<script>
+(function(){
+  'use strict';
+
+  // تحديث الـ vh لحل مشكلة شريط المتصفح
+  function setVh(){
+    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+  }
+  window.addEventListener('resize', setVh);
+  window.addEventListener('orientationchange', ()=> setTimeout(setVh,300));
+  setVh();
+
+  const openBtn=document.getElementById('openChat');
+  const overlay=document.getElementById('chatOverlay');
+  const closeBtn=document.getElementById('closeChat');
+  const area=document.getElementById('area');
+  const inp=document.getElementById('inp');
+  const btn=document.getElementById('btn');
+
+  const WORKER_URL='https://kawkab.kawkab-arabia.workers.dev/';
+  let historyMessages=[],chatOpened=false,finalized=false;
+
+  function postToParent(action){
+    try{
+      if(window.parent&&window.parent!==window){
+        window.parent.postMessage({action},'*');
+      }
+    }catch(e){}
+  }
+
+  function safeText(s){
+    const d=document.createElement('div');
+    d.textContent=s;
+    return d.innerHTML;
+  }
+
+  function append(who,text){
+    const w=document.createElement('div');
+    w.className='msg '+(who==='user'?'user':'bot');
+    const b=document.createElement('div');
+    b.className='bubble';
+    b.innerHTML=safeText(text);
+    w.appendChild(b);
+    const m=document.createElement('div');
+    m.className='meta';
+    m.textContent=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+    w.appendChild(m);
+    area.appendChild(w);
+    requestAnimationFrame(()=>w.scrollIntoView({behavior:'smooth',block:'nearest'}));
+  }
+
+  function showTyping(){
+    const el=document.createElement('div');
+    el.className='msg bot';
+    el.innerHTML='<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+    area.appendChild(el);
+    requestAnimationFrame(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}));
+    return el;
+  }
+
+  inp.addEventListener('focus',()=>{
+    setTimeout(()=>{
+      if(area.lastElementChild)
+        area.lastElementChild.scrollIntoView({behavior:'smooth',block:'nearest'});
+    },300);
+  });
+
+  function openChat(){
+    overlay.classList.add('show');
+    openBtn.classList.add('hidden');
+    if(!chatOpened){
+      append('bot','أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎');
+      chatOpened=true;
     }
-    window.addEventListener('resize', setVh);
-    window.addEventListener('orientationchange', function(){
-      setTimeout(setVh,300);
+    postToParent('chatOpened');
+    setTimeout(()=>inp.focus(),400);
+  }
+
+  function closeChat(){
+    overlay.classList.remove('show');
+    openBtn.classList.remove('hidden');
+    postToParent('chatClosed');
+  }
+
+  async function sendToWorker(payload){
+    return await fetch(WORKER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
     });
-    setVh();
-    
-    const openBtn = document.getElementById('openChat');
-    const overlay = document.getElementById('chatOverlay');
-    const closeBtn = document.getElementById('closeChat');
-    const area = document.getElementById('area');
-    const inp = document.getElementById('inp');
-    const btn = document.getElementById('btn');
-    const quick = document.getElementById('quickActions');
-    
-    const WORKER_URL = 'https://kawkab.kawkab-arabia.workers.dev/';
-    
-    let historyMessages = [], chatOpened = false, finalized = false;
-    
-    function postToParent(action){
-      try{
-        if(window.parent && window.parent !== window){
-          window.parent.postMessage({action}, '*');
-        }
-      }catch(e){}
+  }
+
+  async function sendMessage(){
+    const txt=inp.value.trim();
+    if(!txt||finalized)return;
+    append('user',txt);
+    inp.value='';
+    const typing=showTyping();
+    btn.disabled=true;
+    inp.disabled=true;
+    try{
+      const res=await sendToWorker({messages:historyMessages.concat([{role:'user',content:txt}])});
+      typing.remove();
+      if(!res.ok){
+        append('bot','النت فاصل ولا في مشكلة 😅');
+      }else{
+        const j=await res.json().catch(()=>({}));
+        const reply=j.text||j.reply||'مش فاهمك قوي 😅 جرب تاني';
+        append('bot',reply);
+        historyMessages.push({role:'user',content:txt},{role:'assistant',content:reply});
+      }
+    }catch(e){
+      typing.remove();
+      append('bot','النت فاصل ولا إيه؟ 😅');
+    }finally{
+      btn.disabled=false;
+      inp.disabled=false;
+      inp.focus();
     }
-    
-    function safeText(s){
-      const d = document.createElement('div');
-      d.textContent = s;
-      return d.innerHTML;
-    }
-    
-    function append(who, text){
-      const w = document.createElement('div');
-      w.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
-      const b = document.createElement('div');
-      b.className = 'bubble';
-      b.innerHTML = safeText(text);
-      w.appendChild(b);
-      const m = document.createElement('div');
-      m.className = 'meta';
-      const now = new Date();
-      const time = now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-      m.textContent = time;
-      w.appendChild(m);
-      area.appendChild(w);
-      
-      requestAnimationFrame(()=>{
-        try{
-          w.scrollIntoView({behavior:'smooth', block:'nearest'});
-        }catch(e){
-          area.scrollTop = area.scrollHeight - area.clientHeight;
-        }
-      });
-    }
-    
-    function showTyping(){
-      const el = document.createElement('div');
-      el.className = 'msg bot';
-      el.innerHTML = '<div class="bubble"><div class="typing" aria-hidden="true"><span></span><span></span><span></span></div></div>';
-      area.appendChild(el);
-      requestAnimationFrame(()=> el.scrollIntoView({behavior:'smooth', block:'nearest'}));
-      return el;
-    }
-    
-    inp.addEventListener('focus', ()=> {
-      setTimeout(()=> {
-        const controls = document.querySelector('.controls');
-        if(controls) {
-          controls.scrollIntoView({behavior:'smooth', block:'end', inline:'nearest'});
-        }
-        if(area.lastElementChild) {
-          area.lastElementChild.scrollIntoView({behavior:'smooth', block:'nearest'});
-        }
-      }, 350);
-    });
-    
-    let lastInnerHeight = window.innerHeight;
-    setInterval(()=> {
-      if(Math.abs(window.innerHeight - lastInnerHeight) > 120){
-        lastInnerHeight = window.innerHeight;
-        setVh();
-        if(area.lastElementChild) area.lastElementChild.scrollIntoView({behavior:'smooth', block:'nearest'});
-      }
-    }, 300);
-    
-    function openChat(){
-      overlay.classList.add('show');
-      overlay.setAttribute('aria-hidden', 'false');
-      openBtn.classList.add('hidden');
-      if(!chatOpened){
-        append('bot', 'أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎');
-        chatOpened = true;
-      }
-      postToParent('chatOpened');
-      setTimeout(()=> inp.focus(), 400);
-    }
-    
-    function closeChat(){
-      overlay.classList.remove('show');
-      overlay.setAttribute('aria-hidden', 'true');
-      openBtn.classList.remove('hidden');
-      postToParent('chatClosed');
-      setTimeout(()=> openBtn.focus(), 200);
-    }
-    
-    async function sendToWorker(payload){
-      try{
-        const res = await fetch(WORKER_URL, {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify(payload),
-        });
-        return res;
-      }catch(e){
-        throw e;
-      }
-    }
-    
-    async function sendMessage(){
-      const txt = inp.value.trim();
-      if(!txt || finalized) return;
-      append('user', txt);
-      inp.value = '';
-      const typing = showTyping();
-      btn.disabled = true;
-      inp.disabled = true;
-      
-      try{
-        const res = await sendToWorker({messages: historyMessages.concat([{role:'user', content: txt}])});
-        typing.remove();
-        if(!res || !res.ok){
-          append('bot', 'النت فاصل ولا في مشكلة في السيرفر 😅');
-        } else {
-          const j = await res.json().catch(()=> ({}));
-          const reply = j.text || j.reply || 'مش فاهمك قوي 😅 جرب تاني';
-          append('bot', reply);
-          historyMessages.push({role:'user', content: txt}, {role:'assistant', content: reply});
-        }
-      }catch(e){
-        try{ typing.remove(); }catch(_){}
-        append('bot', 'النت فاصل ولا إيه؟ 😅');
-      } finally {
-        btn.disabled = false;
-        inp.disabled = false;
-        inp.focus();
-      }
-    }
-    
-    openBtn.addEventListener('click', openChat);
-    closeBtn.addEventListener('click', closeChat);
-    btn.addEventListener('click', sendMessage);
-    inp.addEventListener('keydown', (e)=> {
-      if(e.key === 'Enter') sendMessage();
-    });
-    quick.addEventListener('click', (e)=> {
-      if(e.target.tagName === 'BUTTON'){
-        inp.value = e.target.dataset.text || '';
-        inp.focus();
-      }
-    });
-    
-    const mo = new MutationObserver((mutations)=> {
-      const threshold = 120;
-      const nearBottom = (area.scrollHeight - area.scrollTop - area.clientHeight) < threshold;
-      if(nearBottom){
-        const last = area.lastElementChild;
-        if(last) last.scrollIntoView({behavior:'smooth', block:'nearest'});
-      }
-    });
-    mo.observe(area, {childList:true, subtree:false});
-    
-    window.addEventListener('message', (ev)=> {
-      if(!ev.data || typeof ev.data.action !== 'string') return;
-      if(ev.data.action === 'closeChat'){
-        closeChat();
-      }
-      if(ev.data.action === 'focusInput'){
-        if(overlay.classList.contains('show')) setTimeout(()=> inp.focus(), 200);
-      }
-    });
-    
-    window.addEventListener('keydown', (e)=> {
-      if(e.key === 'Escape' && overlay.classList.contains('show')){
-        closeChat();
-      }
-    });
-    
-    overlay.addEventListener('touchmove', (e)=> {
-      e.stopPropagation();
-    }, {passive:false});
-    
-    setTimeout(()=> {
-      if(area.lastElementChild) area.lastElementChild.scrollIntoView({block:'nearest'});
-    }, 200);
-    
-    window.__KAWKAB_CHAT = {
-      open: openChat,
-      close: closeChat,
-      sendMessageText: (t)=> {
-        inp.value = t;
-        sendMessage();
-      }
-    };
-  })();
-  </script>
+  }
+
+  openBtn.onclick=openChat;
+  closeBtn.onclick=closeChat;
+  btn.onclick=sendMessage;
+  inp.onkeydown=e=>{if(e.key==='Enter')sendMessage();};
+
+  window.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&overlay.classList.contains('show'))closeChat();
+  });
+
+})();
+</script>
 </body>
 </html>
