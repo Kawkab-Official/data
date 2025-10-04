@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>بوت كوكب — فصال مباشر</title>
 <style>
 :root {
@@ -20,6 +20,11 @@ body{
 font-family:"Tahoma",system-ui;
 background:transparent;
 overflow:hidden;
+margin:0;
+padding:0;
+width:100%;
+height:100%;
+position:fixed;
 }
 
 .chat-fab {
@@ -45,23 +50,29 @@ transition:transform .3s;
 
 .chat-overlay {
 position:fixed;
-inset:0;
+top:0;
+left:0;
+right:0;
+bottom:0;
 background:rgba(0,0,0,0.5);
 display:none;
-justify-content:center;
-align-items:center;
 z-index:10000;
+padding:0;
+margin:0;
 }
-.chat-overlay.show{display:flex;}
+.chat-overlay.show{display:block;}
 
 .chat-box {
 width:100%;
 height:100%;
+max-height:100vh;
+max-height:100dvh;
 background:var(--card);
 display:flex;
 flex-direction:column;
 position:relative;
 animation:fadeIn .3s;
+overflow:hidden;
 }
 @keyframes fadeIn {from{opacity:0;}to{opacity:1;}}
 
@@ -71,6 +82,10 @@ color:#fff;
 padding:14px 12px;
 display:flex;
 align-items:center;
+flex-shrink:0;
+position:sticky;
+top:0;
+z-index:100;
 }
 .header .title{flex:1;font-weight:700;}
 .header .close {
@@ -81,8 +96,28 @@ border:none;
 color:#fff;
 }
 
-.area {flex:1; padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;}
-.controls{padding:8px;border-top:1px solid #eee;display:flex;flex-direction:column;gap:6px;}
+.area {
+flex:1; 
+padding:12px; 
+overflow-y:auto; 
+overflow-x:hidden;
+display:flex; 
+flex-direction:column; 
+gap:6px;
+min-height:0;
+-webkit-overflow-scrolling:touch;
+}
+.controls{
+padding:8px;
+border-top:1px solid #eee;
+display:flex;
+flex-direction:column;
+gap:6px;
+flex-shrink:0;
+background:var(--card);
+position:sticky;
+bottom:0;
+}
 .input{display:flex;gap:8px;align-items:center;}
 .input input{flex:1;padding:10px;border-radius:14px;border:1px solid #e6eef6;font-size:14px;}
 .btn{padding:10px 14px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer;}
@@ -178,7 +213,10 @@ m.className='meta';
 m.textContent=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
 w.appendChild(m);
 area.appendChild(w);
+setTimeout(()=>{
 area.scrollTop=area.scrollHeight;
+w.scrollIntoView({behavior:'smooth',block:'end'});
+},100);
 }
 
 function showTyping(){
@@ -186,7 +224,10 @@ const el=document.createElement('div');
 el.className='msg bot';
 el.innerHTML='<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
 area.appendChild(el);
+setTimeout(()=>{
 area.scrollTop=area.scrollHeight;
+el.scrollIntoView({behavior:'smooth',block:'end'});
+},100);
 return el;
 }
 
@@ -217,7 +258,14 @@ btn.disabled=false;inp.focus();
 btn.onclick=sendMessage;
 inp.onkeydown=e=>{if(e.key==='Enter')sendMessage();};
 quick.onclick=e=>{if(e.target.tagName==='BUTTON'){inp.value=e.target.dataset.text;inp.focus();}}
-inp.addEventListener('focus',()=>{setTimeout(()=>{area.scrollTop=area.scrollHeight;},300);});
+inp.addEventListener('focus',()=>{
+setTimeout(()=>{
+const msgs=area.querySelectorAll('.msg');
+if(msgs.length>0){
+msgs[msgs.length-1].scrollIntoView({behavior:'smooth',block:'end'});
+}
+},400);
+});
 })();
 </script>
 </body>
