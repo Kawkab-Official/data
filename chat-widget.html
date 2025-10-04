@@ -82,6 +82,7 @@ html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;over
 /* عناصر التحكم في الأسفل - نأخذ safe-area-inset-bottom */
 .controls{
   padding:10px 12px  calc(12px + env(safe-area-inset-bottom,0px));
+  padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px) + 8px);
   border-top:1px solid #eee;display:flex;flex-direction:column;gap:8px;flex-shrink:0;background:var(--card);
 }
 .input{display:flex;gap:8px;align-items:center}
