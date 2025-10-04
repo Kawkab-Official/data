@@ -98,7 +98,15 @@ const quick=document.getElementById('quickActions');
 const WORKER_URL='https://kawkab.kawkab-arabia.workers.dev/';
 let historyMessages=[],lastOfferPercent=null,finalized=false,timerStarted=false,timeLeft=60,countdownId=null;
 
-openBtn.onclick=()=>{overlay.style.display='flex';document.body.style.overflow='hidden';};
+openBtn.onclick=()=>{
+  overlay.style.display='flex';
+  document.body.style.overflow='hidden';
+  setTimeout(()=>{
+    if(!area.querySelector('.msg')){
+      append('bot','أهلاً بيك في بوت كوكب! قولّي إنت عايز تفاوض على إيه؟ 😎');
+    }
+  }, 200);
+};
 closeBtn.onclick=()=>{overlay.style.display='none';document.body.style.overflow='';};
 
 function safeText(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
