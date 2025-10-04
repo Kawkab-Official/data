@@ -5,249 +5,185 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>بوت كوكب — فصال مباشر</title>
 <style>
+/* 1. تحديث الثيم إلى أسود وأبيض */
 :root{
---accent:#0f1724;
---accent-2:#0ea5a4;
---bg:#f7fbff;
+--accent:#1f2937; /* Dark Grey/Near Black for Header/Button/User Bubble */
+--accent-2:#4b5563; /* Medium Dark Grey for hover/shadows */
+--bg:#ffffff;
 --card:#ffffff;
---user-bg:#0ea5a4;
+--user-bg:var(--accent);
 --user-text:#ffffff;
---bot-bg:#f3f4f6;
---bot-text:#1f2937;
---muted:#667085;
+--bot-bg:#f3f4f6; /* Light Grey */
+--bot-text:var(--accent);
+--muted:#6b7280;
 --radius:16px;
---shadow:0 2px 8px rgba(0,0,0,0.1);
+--shadow:0 2px 8px rgba(0,0,0,0.15);
 }
 
-/* Reset */
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;overflow:hidden}
 
-/* FAB */
 .chat-fab {
 position:fixed;
 bottom:calc(20px + env(safe-area-inset-bottom, 0px));
 right:20px;
 z-index:9999;
 width:60px;height:60px;border-radius:50%;
-background:linear-gradient(135deg,var(--accent-2),var(--accent));
-display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;
-cursor:pointer;box-shadow:0 4px 12px rgba(14,165,164,0.4);
+background:var(--accent); /* أسود */
+display:flex;align-items:center;justify-content:center;color:#fff;
+font-size:18px; /* حجم أصغر للنص */
+font-weight:700;
+cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.4);
 transition:transform .25s,opacity .25s;
 }
-.chat-fab:hover{transform:scale(1.05)}
+.chat-fab::before{content:'فصال';} /* 6. نص بدلاً من الأيقونة */
+.chat-fab:hover{transform:scale(1.05); box-shadow:0 6px 16px rgba(0,0,0,0.5);}
 .chat-fab.hidden{opacity:0;pointer-events:none}
 
-/* Overlay and box */
 .chat-overlay {
-position:fixed;
-top:0;
-left:0;
-right:0;
-bottom:0;
-display:none;
-background:rgba(0,0,0,0.5);
-z-index:10000;
--webkit-backdrop-filter: blur(8px);
-backdrop-filter: blur(8px);
+position:fixed;top:0;left:0;right:0;bottom:0;display:none;
+background:rgba(0,0,0,0.5);z-index:10000;
+-webkit-backdrop-filter: blur(8px);backdrop-filter: blur(8px);
 }
 .chat-overlay.show{display:block}
 
 .chat-box {
-position:absolute;
-top:0;
-left:0;
-right:0;
-bottom:0;
-background:linear-gradient(to bottom, #f9fafb 0%, #ffffff 100%);
-display:grid;
-grid-template-rows: auto 1fr auto;
-overflow:hidden;
+position:absolute;top:0;left:0;right:0;bottom:0;
+background:var(--bg);
+display:grid;grid-template-rows: auto 1fr auto;overflow:hidden;
 }
 
-/* HEADER: أبيض/أسود حسب الطلب */
 .header {
-background:#ffffff; /* أبيض */
-color:#000000; /* أسود */
+background:var(--accent); /* أسود */
+color:#fff;
 padding:16px 12px;
 padding-top:calc(16px + env(safe-area-inset-top,0px));
-display:flex;
-align-items:center;
-box-shadow:0 2px 12px rgba(0,0,0,0.06);
+display:flex;align-items:center;box-shadow:0 2px 12px rgba(0,0,0,0.2);
 }
 .header .title{
-flex:1;
-font-weight:700;
-font-size:17px;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
-display:flex;
-align-items:center;
-gap:8px;
+flex:1;font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+display:flex;align-items:center;gap:8px;
 }
-.header .title::before{content:'💬'}
+.header .title::before{content:none;} /* إزالة رمز المحادثة من العنوان */
 .header .close{
-cursor:pointer;
-font-size:26px;
-background:rgba(0,0,0,0.06);
-border:none;
-color:#000;
-width:38px;
-height:38px;
-display:flex;
-align-items:center;
-justify-content:center;
-padding:0;
-border-radius:50%;
-transition:background .2s;
+cursor:pointer;font-size:26px;background:rgba(255,255,255,0.15);border:none;color:#fff;
+width:38px;height:38px;display:flex;align-items:center;justify-content:center;padding:0;
+border-radius:50%;transition:background .2s;
 }
-.header .close:hover{background:rgba(0,0,0,0.12)}
+.header .close:hover{background:rgba(255,255,255,0.25)}
 
-/* area, controls */
 .area{
-overflow-y:auto;
-overflow-x:hidden;
-padding:16px 12px;
-padding-bottom:40px;
-display:flex;
-flex-direction:column;
-gap:12px;
--webkit-overflow-scrolling:touch;
-scroll-behavior:smooth;
+overflow-y:auto;overflow-x:hidden;padding:16px 12px;padding-bottom:40px;
+display:flex;flex-direction:column;gap:12px;
+-webkit-overflow-scrolling:touch;scroll-behavior:smooth;
 }
 
 .controls{
 background:#ffffff;
 border-top:1px solid #e5e7eb;
 padding:12px;
-padding-bottom:80px;
+padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px)); /* padding for input */
 display:flex;
 flex-direction:column;
 gap:10px;
 box-shadow:0 -4px 16px rgba(0,0,0,0.06);
+position:relative; /* 5. لضمان ظهور الـ input bar فوق الكيبورد */
+z-index:10;
 }
 
 /* Timer Display */
 .timer-container{
-display:none;
-align-items:center;
-justify-content:center;
-padding:12px;
+display:none;align-items:center;justify-content:center;padding:12px;
 background:linear-gradient(135deg, #fef3c7, #fde68a);
-border-radius:12px;
-gap:8px;
-animation:pulse 2s ease-in-out infinite;
+border-radius:12px;gap:8px;animation:pulse 2s ease-in-out infinite;
 }
 .timer-container.active{display:flex}
-.timer-text{
-font-size:14px;
-font-weight:600;
-color:#92400e;
-}
-.timer-count{
-font-size:18px;
-font-weight:700;
-color:#b45309;
-min-width:35px;
-text-align:center;
-}
+.timer-text{font-size:14px;font-weight:600;color:#92400e;}
+.timer-count{font-size:18px;font-weight:700;color:#b45309;min-width:35px;text-align:center;}
 @keyframes pulse{
 0%,100%{transform:scale(1)}
 50%{transform:scale(1.02)}
 }
 
-/* input and send button */
+/* على الديسكتوب نرجع للـ padding العادي */
+@media (min-width:700px){
+.controls{
+padding-bottom:16px;
+box-shadow:none;
+}
+}
+
 .input{
-display:flex;
-gap:8px;
-align-items:stretch;
+display:flex;gap:8px;align-items:stretch;
 }
 .input input{
-flex:1;
-padding:14px 16px;
-border-radius:24px;
-border:2px solid #e5e7eb;
-font-size:15px;
-min-width:0;
-background:#ffffff;
+flex:1;padding:14px 16px;border-radius:24px;border:2px solid #e5e7eb;
+font-size:15px;min-width:0;background:#ffffff;
 transition:border-color .2s, box-shadow .2s;
 }
 .input input:focus{
-outline:none;
-border-color:var(--accent-2);
-box-shadow:0 0 0 3px rgba(14,165,164,0.1);
+outline:none;border-color:var(--accent);
+box-shadow:0 0 0 3px rgba(31,41,55,0.1);
 }
-/* زر الإرسال: أسود بخط أبيض */
 .btn{
-padding:12px 24px;
-border-radius:24px;
-border:none;
-background:#000000; /* أسود */
-color:#ffffff; /* أبيض */
-cursor:pointer;
-font-weight:600;
-min-width:80px;
-box-shadow:0 2px 8px rgba(0,0,0,0.15);
+padding:12px 24px;border-radius:24px;border:none;
+background:var(--accent); /* أسود */
+color:#fff;cursor:pointer;font-weight:600;min-width:80px;
+box-shadow:0 2px 8px rgba(31,41,55,0.3);
 transition:transform .2s, box-shadow .2s;
 }
 .btn:hover{
 transform:translateY(-1px);
-box-shadow:0 6px 18px rgba(0,0,0,0.22);
+box-shadow:0 4px 12px rgba(31,41,55,0.4);
 }
-.btn:active{ transform:translateY(0); }
-.btn:disabled{ opacity:0.6; cursor:not-allowed; transform:none; }
+.btn:active{transform:translateY(0);}
+.btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
 
 .quick{display:flex;gap:8px;flex-wrap:wrap}
 .quick button{
-padding:10px 16px;
-border-radius:20px;
-border:2px solid #e5e7eb;
-background:#ffffff;
-font-size:13px;
-cursor:pointer;
-color:var(--accent);
-font-weight:500;
-transition:all .2s;
+padding:10px 16px;border-radius:20px;border:2px solid #e5e7eb;
+background:#ffffff;font-size:13px;cursor:pointer;
+color:var(--accent);font-weight:500;transition:all .2s;
 }
 .quick button:hover{
-border-color:var(--accent-2);
-background:#f0fdfa;
+border-color:var(--accent);
+background:#e5e7eb;
 transform:translateY(-1px);
 }
 
-/* msgs */
-.msg{
-display:flex;
-max-width:80%;
-flex-direction:column;
-word-break:break-word;
-animation:slideIn .3s ease-out;
-}
-@keyframes slideIn{
-from{opacity:0;transform:translateY(10px)}
-to{opacity:1;transform:translateY(0)}
-}
-.msg.user{ align-self:flex-end; align-items:flex-end; }
+.msg{display:flex;max-width:80%;flex-direction:column;word-break:break-word;animation:slideIn .3s ease-out;}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* رسالة المستخدم - يمين */
+.msg.user{align-self:flex-end;align-items:flex-end;}
 .msg.user .bubble{
-background:linear-gradient(135deg,var(--accent-2),var(--accent));
+background:var(--user-bg); /* أسود */
 color:var(--user-text);
 border-radius:18px 18px 4px 18px;
-padding:12px 16px;
-box-shadow:var(--shadow);
+padding:12px 16px;box-shadow:var(--shadow);
 }
-.msg.bot{ align-self:flex-start; align-items:flex-start; }
-.msg.bot .bubble{ background:var(--bot-bg); color:var(--bot-text); border-radius:18px 18px 18px 4px; padding:12px 16px; box-shadow:var(--shadow); border:1px solid #e5e7eb; }
 
-.meta{ font-size:11px; color:var(--muted); margin-top:6px; padding:0 4px; }
+/* رسالة البوت - شمال */
+.msg.bot{align-self:flex-start;align-items:flex-start;}
+.msg.bot .bubble{
+background:var(--bot-bg);
+color:var(--bot-text);
+border-radius:18px 18px 18px 4px;
+padding:12px 16px;box-shadow:var(--shadow);border:1px solid #e5e7eb;
+}
 
-.typing{ display:flex; gap:4px; padding:4px 0; }
-.typing span{ width:8px; height:8px; background:var(--muted); border-radius:50%; display:inline-block; animation:dot 1.4s infinite; }
+.meta{font-size:11px;color:var(--muted);margin-top:6px;padding:0 4px;}
+
+.typing{display:flex;gap:4px;padding:4px 0;}
+.typing span{width:8px;height:8px;background:var(--muted);border-radius:50%;display:inline-block;animation:dot 1.4s infinite;}
 .typing span:nth-child(2){animation-delay:.2s}
 .typing span:nth-child(3){animation-delay:.4s}
-@keyframes dot{0%,60%,100%{opacity:.3;transform:translateY(0) scale(0.8)}30%{opacity:1;transform:translateY(-6px) scale(1)}}
+@keyframes dot{
+0%,60%,100%{opacity:.3;transform:translateY(0) scale(0.8)}
+30%{opacity:1;transform:translateY(-6px) scale(1)}
+}
 
-/* Result styling */
+/* Result message styling */
 .result-msg{
 background:linear-gradient(135deg, #dcfce7, #bbf7d0);
 border:2px solid #86efac;
@@ -257,48 +193,51 @@ margin:8px 0;
 text-align:center;
 animation:celebrate .6s ease-out;
 }
-.result-msg .result-title{ font-size:18px; font-weight:700; color:#15803d; margin-bottom:8px; }
-.result-msg .result-value{ font-size:32px; font-weight:900; color:#16a34a; text-shadow:0 2px 4px rgba(22,163,74,0.2); }
-@keyframes celebrate{0%{transform:scale(0.8) rotate(-5deg);opacity:0}50%{transform:scale(1.05) rotate(2deg)}100%{transform:scale(1) rotate(0);opacity:1} }
+.result-msg .result-title{font-size:18px;font-weight:700;color:#15803d;margin-bottom:8px;}
+.result-msg .result-value{font-size:32px;font-weight:900;color:#16a34a;text-shadow:0 2px 4px rgba(22,163,74,0.2);}
+@keyframes celebrate{
+0%{transform:scale(0.8) rotate(-5deg);opacity:0}
+50%{transform:scale(1.05) rotate(2deg)}
+100%{transform:scale(1) rotate(0);opacity:1}
+}
 
 @media (min-width:700px){
-.chat-overlay{ display:none; align-items:center; justify-content:center; }
-.chat-overlay.show{ display:flex }
-.chat-box{ position:relative; width:640px; height:90vh; max-height:800px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.chat-overlay{display:none;align-items:center;justify-content:center;}
+.chat-overlay.show{display:flex}
+.chat-box{
+position:relative;width:640px;height:90vh;max-height:800px;
+border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
 .chat-fab{right:28px;bottom:28px}
 }
 </style>
 </head>
 <body>
 
-<div class="chat-fab" id="openChat" role="button" aria-label="افتح الشات">💬</div>
+<div class="chat-fab" id="openChat" role="button" aria-label="افتح شات الفصال"></div>
 
 <div class="chat-overlay" id="chatOverlay" aria-hidden="true">
 <div class="chat-box" role="dialog" aria-modal="true" aria-label="بوت كوكب">
 <div class="header">
-  <div class="title">بوت كوكب — فصال مباشر</div>
-  <button class="close" id="closeChat" aria-label="اغلاق">×</button>
+<div class="title">بوت كوكب — فصال مباشر</div>
+<button class="close" id="closeChat" aria-label="اغلاق">×</button>
 </div>
-
 <div class="area" id="area" tabindex="0" aria-live="polite" aria-atomic="false"></div>
-
 <div class="controls">
-  <div class="timer-container" id="timerContainer">
-    <span class="timer-text">⏱️ الوقت المتبقي:</span>
-    <span class="timer-count" id="timerDisplay">60</span>
-    <span class="timer-text">ثانية</span>
-  </div>
-
-  <div class="quick" id="quickActions" aria-hidden="false">
-    <button data-text="أريد أفضل عرض">🎯 أفضل عرض</button>
-    <button data-text="هل في خصم أعلى؟">💰 خصم أعلى</button>
-    <button data-text="تمام" data-finalize="true">✅ تمام</button>
-  </div>
-
-  <div class="input">
-    <input id="inp" type="text" placeholder="اكتب رسالتك هنا..." aria-label="اكتب رسالتك" autocomplete="off" />
-    <button id="btn" class="btn" aria-label="أرسل">إرسال</button>
-  </div>
+<div class="timer-container" id="timerContainer">
+<span class="timer-text">⏱️ الوقت المتبقي:</span>
+<span class="timer-count" id="timerDisplay">60</span>
+<span class="timer-text">ثانية</span>
+</div>
+<div class="quick" id="quickActions" aria-hidden="false">
+<button data-text="أريد أفضل عرض">🎯 أفضل عرض</button>
+<button data-text="هل في خصم أعلى؟">💰 خصم أعلى</button>
+<button data-text="تمام" data-finalize="true">✅ تمام</button>
+</div>
+<div class="input">
+<input id="inp" type="text" placeholder="اكتب رسالتك هنا..." aria-label="اكتب رسالتك" autocomplete="off" />
+<button id="btn" class="btn" aria-label="أرسل">إرسال</button>
+</div>
 </div>
 </div>
 </div>
@@ -322,287 +261,332 @@ const WORKER_URL = 'https://kawkab.kawkab-arabia.workers.dev/';
 let historyMessages = [], chatOpened = false, finalized = false;
 let timerInterval = null;
 let timeRemaining = 60;
-let botRepliesCount = 0;
+let firstBotReplySent = false;
 
 function postToParent(action){
-  try{ if(window.parent && window.parent !== window){ window.parent.postMessage({action}, '*'); } }catch(e){}
+try{
+if(window.parent && window.parent !== window){
+window.parent.postMessage({action}, '*');
+}
+}catch(e){}
 }
 
 function safeText(s){
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+const d = document.createElement('div');
+d.textContent = s;
+return d.innerHTML;
 }
 
 function scrollToBottom(){
-  requestAnimationFrame(()=>{ area.scrollTop = area.scrollHeight; });
+requestAnimationFrame(()=>{
+area.scrollTop = area.scrollHeight;
+});
 }
 
 function append(who, text, isResult = false){
-  const w = document.createElement('div');
-  w.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
-  const b = document.createElement('div');
-  b.className = isResult ? 'result-msg' : 'bubble';
-  if(isResult){
-    b.innerHTML = `<div class="result-title">🎉 مبروك! خصمك النهائي</div><div class="result-value">${safeText(text)}</div>`;
-  } else {
-    b.innerHTML = safeText(text);
-  }
-  w.appendChild(b);
-  if(!isResult){
-    const m = document.createElement('div');
-    m.className = 'meta';
-    const now = new Date();
-    const time = now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-    m.textContent = time;
-    w.appendChild(m);
-  }
-  area.appendChild(w);
-  scrollToBottom();
-
-  if (who === 'bot') {
-    botRepliesCount++;
-    // ابدأ العداد بعد أول رد من البوت
-    if (botRepliesCount === 1) startTimer();
-  }
+const w = document.createElement('div');
+w.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
+const b = document.createElement('div');
+b.className = isResult ? 'result-msg' : 'bubble';
+if(isResult){
+b.innerHTML = `<div class="result-title">🎉 مبروك! خصمك النهائي</div><div class="result-value">${safeText(text)}</div>`;
+} else {
+b.innerHTML = safeText(text);
+}
+w.appendChild(b);
+if(!isResult){
+const m = document.createElement('div');
+m.className = 'meta';
+const now = new Date();
+const time = now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+m.textContent = time;
+w.appendChild(m);
+}
+area.appendChild(w);
+scrollToBottom();
 }
 
 function showTyping(){
-  const el = document.createElement('div');
-  el.className = 'msg bot';
-  el.innerHTML = '<div class="bubble"><div class="typing" aria-hidden="true"><span></span><span></span><span></span></div></div>';
-  area.appendChild(el);
-  scrollToBottom();
-  return el;
+const el = document.createElement('div');
+el.className = 'msg bot';
+el.innerHTML = '<div class="bubble"><div class="typing" aria-hidden="true"><span></span><span></span><span></span></div></div>';
+area.appendChild(el);
+scrollToBottom();
+return el;
 }
 
 function startTimer(){
-  if(timerInterval) return;
-  timeRemaining = 60;
-  timerContainer.classList.add('active');
-  timerDisplay.textContent = timeRemaining;
-  timerInterval = setInterval(()=>{
-    timeRemaining--;
-    timerDisplay.textContent = timeRemaining;
-    if(timeRemaining <= 0){
-      stopTimer();
-      finalize(true); // فرضاً انتهاء المدة يعني نهاية التفاوض
-    }
-  }, 1000);
+if(timerInterval) return;
+timeRemaining = 60;
+timerContainer.classList.add('active');
+timerDisplay.textContent = timeRemaining;
+timerInterval = setInterval(()=>{
+timeRemaining--;
+timerDisplay.textContent = timeRemaining;
+if(timeRemaining <= 0){
+stopTimer();
+finalize();
+}
+}, 1000);
 }
 
 function stopTimer(){
-  if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
-  timerContainer.classList.remove('active');
+if(timerInterval){
+clearInterval(timerInterval);
+timerInterval = null;
+}
+timerContainer.classList.remove('active');
 }
 
-function computeFinalPercentFromHistory() {
-  // يبحث عن آخر نسبة قدمها البوت (مثل 15%)
-  const re = /(\d{1,3})\s*%/g;
-  for (let i = historyMessages.length - 1; i >= 0; i--) {
-    const m = historyMessages[i];
-    if (m && m.role === 'assistant' && typeof m.content === 'string') {
-      let match;
-      while ((match = re.exec(m.content)) !== null) {
-        const n = parseInt(match[1], 10);
-        if (!Number.isNaN(n)) {
-          return Math.min(30, n);
+/**
+ * وظيفة جديدة: معالجة وإخفاء الكود السري من رد البوت
+ * @param {string} rawText النص الخام من البوت الذي قد يحتوي على الكود السري {"discount": X}
+ * @returns {{text: string, secretDiscount: number | null}} النص النظيف وقيمة الخصم
+ */
+function processBotReply(rawText) {
+    // الكود السري: {"discount": X} حيث X من 00 إلى 99
+    const secretCodeRegex = /\{"discount":\s*(\d{1,2})\}/;
+    const match = rawText.match(secretCodeRegex);
+    
+    let cleanedText = rawText;
+    let secretDiscount = null;
+
+    if (match) {
+        // 1. استخلاص رقم الخصم
+        secretDiscount = parseInt(match[1], 10);
+        // 2. إزالة الكود السري من النص المعروض للمستخدم
+        cleanedText = rawText.replace(secretCodeRegex, '').trim();
+    }
+    
+    return {
+        text: cleanedText,
+        // رقم الخصم المستخلص من الكود السري (إذا وُجد)
+        secretDiscount: secretDiscount
+    };
+}
+
+// دالة مساعدة لتحويل الأرقام العربية (٠-٩) إلى إنجليزية (0-9)
+function normalizeArabicNumerals(s) {
+    if (!s) return s;
+    const arabicMap = {
+        '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+        '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9'
+    };
+    // استبدال الأرقام العربية بما يقابلها الإنجليزي
+    return s.replace(/[٠-٩]/g, (match) => arabicMap[match]);
+}
+
+/**
+ * وظيفة جديدة: حساب الخصم النهائي، مع إعطاء الأولوية للكود السري
+ * @returns {number} أقصى نسبة خصم تم منحها.
+ */
+function calculateFinalDiscount(){
+    const secretCodeRegex = /\{"discount":\s*(\d{1,2})\}/; // الكود السري
+    const officialDiscountRegex = /\bعرض\s*:\s*([0-9\u0660-\u0669]{1,2})\s*[%٪]/; // البحث المرئي القديم (كاحتياطي)
+    let maxDiscount = 5; // الخصم الافتراضي 5%
+
+    for(const msg of historyMessages){ 
+        if(msg.role === 'assistant'){
+            let currentDiscount = null;
+            
+            // 1. الأولوية: استخراج الخصم من الكود السري (الأكثر دقة)
+            let secretMatch = msg.content.match(secretCodeRegex);
+            if(secretMatch){
+                currentDiscount = parseInt(secretMatch[1], 10);
+            } else {
+                // 2. الاحتياطي: استخراج الخصم من التنسيق المرئي
+                let visibleMatch = msg.content.match(officialDiscountRegex);
+                if(visibleMatch){
+                    const rawDiscountStr = visibleMatch[1];
+                    const westernDiscountStr = normalizeArabicNumerals(rawDiscountStr);
+                    currentDiscount = parseInt(westernDiscountStr, 10);
+                }
+            }
+
+            if(currentDiscount !== null && !isNaN(currentDiscount) && currentDiscount > maxDiscount){
+                maxDiscount = currentDiscount;
+            }
         }
-      }
     }
-  }
-  return 5; // افتراضي
+    // الحد الأقصى 30% لضمان التوافق مع قواعد البوت
+    return Math.min(maxDiscount, 30);
 }
 
-async function sendToWorker(payload){
-  try{
-    const res = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload),
-    });
-    return res;
-  }catch(e){
-    throw e;
-  }
-}
+function finalize(){
+    if(finalized) return;
+    finalized = true;
+    stopTimer();
+    btn.disabled = true;
+    inp.disabled = true;
+    quick.style.display = 'none';
 
-// finalize: إذا تم استدعاؤه من داخل الشات أو بنقرة "تمام"
-// param fromTimeout:boolean لو اتنهى العداد
-async function finalize(fromTimeout = false){
-  if(finalized) return;
-  finalized = true;
-  stopTimer();
-  btn.disabled = true;
-  inp.disabled = true;
-  quick.style.display = 'none';
+    const finalDiscount = calculateFinalDiscount(); // حساب الخصم النهائي بعد التحديث
 
-  try {
-    // نطلب من الـ Worker حساب finalize (أولاً) — لو فشل نعمل fallback محلي
-    const res = await sendToWorker({ messages: historyMessages, finalize: true });
-    if (res && res.ok) {
-      const j = await res.json().catch(()=> ({}));
-      const percent = Number.isFinite(Number(j.percent)) ? Number(j.percent) : computeFinalPercentFromHistory();
-      append('bot', `${percent}%`, true);
-      setTimeout(()=> append('bot', 'شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊'), 1000);
-      return;
-    }
-  } catch (e) {
-    // تجاهل؛ نعمل fallback محلي
-  }
-
-  // fallback محلي لو الـ Worker مش شغال
-  const percentLocal = computeFinalPercentFromHistory();
-  append('bot', `${percentLocal}%`, true);
-  setTimeout(()=> append('bot', 'شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊'), 1000);
-}
-
-// التأكد من ظهور الـ input لما يفتح الكيبورد
-inp.addEventListener('focus', ()=>{
-  setTimeout(()=>{
-    const controls = document.querySelector('.controls');
-    if(controls){ controls.scrollIntoView({behavior:'smooth', block:'nearest'}); }
-  }, 300);
-});
-
-// مراقبة تغيير حجم الشاشة (الكيبورد)
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', ()=>{
     setTimeout(()=>{
-      const controls = document.querySelector('.controls');
-      if(controls){ controls.scrollIntoView({behavior:'smooth', block:'end'}); }
-    }, 100);
-  });
+        append('bot', `${finalDiscount}%`, true);
+        setTimeout(()=>{
+            append('bot', 'شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊');
+        }, 1000);
+    }, 500);
 }
 
 function openChat(){
-  overlay.classList.add('show');
-  overlay.setAttribute('aria-hidden', 'false');
-  openBtn.classList.add('hidden');
-  if(!chatOpened){
-    // ابعث رسالة ترحيب من البوت (ستُشغّل العداد بعد ظهورها بفضل botRepliesCount logic)
-    append('bot', 'أهلاً بيك في بوت كوكب! 🎉 قولّي إنت عايز تفاوض على إيه؟ 😎');
-    chatOpened = true;
-  }
-  postToParent('chatOpened');
-  setTimeout(()=>{ scrollToBottom(); inp.focus(); }, 400);
+overlay.classList.add('show');
+overlay.setAttribute('aria-hidden', 'false');
+openBtn.classList.add('hidden');
+if(!chatOpened){
+append('bot', 'أهلاً بيك في بوت كوكب! 🎉 قولّي إنت عايز تفاوض على إيه؟ 😎');
+chatOpened = true;
+// العداد يبدأ بعد أول رد من البوت في دالة sendMessage
+}
+postToParent('chatOpened');
+setTimeout(()=>{
+scrollToBottom();
+inp.focus();
+}, 400);
 }
 
 function closeChat(){
-  overlay.classList.remove('show');
-  overlay.setAttribute('aria-hidden', 'true');
-  openBtn.classList.remove('hidden');
-  postToParent('chatClosed');
-  inp.blur();
-  setTimeout(()=> openBtn.focus(), 200);
+overlay.classList.remove('show');
+overlay.setAttribute('aria-hidden', 'true');
+openBtn.classList.remove('hidden');
+postToParent('chatClosed');
+inp.blur();
+setTimeout(()=> openBtn.focus(), 200);
 }
 
-async function sendMessage(isFinal = false){
-  const txt = inp.value.trim();
-  if(!txt || finalized) return;
-  append('user', txt);
-  inp.value = '';
+async function sendToWorker(payload){
+try{
+const res = await fetch(WORKER_URL, {
+method: 'POST',
+headers: {'Content-Type':'application/json'},
+body: JSON.stringify(payload),
+});
+return res;
+}catch(e){
+throw e;
+}
+}
 
-  if (isFinal) {
-    // بعث رسالة المستخدم ثم اطلب finalize من الـ Worker
-    historyMessages.push({ role: 'user', content: txt });
-    // حاول نجيب finalize من السيرفر (Worker)
-    try {
-      btn.disabled = true;
-      inp.disabled = true;
-      const res = await sendToWorker({ messages: historyMessages, finalize: true });
-      if (res && res.ok) {
-        const j = await res.json().catch(()=> ({}));
-        const percent = Number.isFinite(Number(j.percent)) ? Number(j.percent) : computeFinalPercentFromHistory();
-        finalized = true;
-        stopTimer();
-        append('bot', `${percent}%`, true);
-        setTimeout(()=> append('bot', 'شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊'), 1000);
-        return;
-      }
-    } catch (e) {
-      // fallback handled below
-    } finally {
-      btn.disabled = false;
-      inp.disabled = false;
-    }
+async function sendMessage(){
+const txt = inp.value.trim();
+if(!txt || finalized) return;
 
-    // fallback محلي
-    finalize();
-    return;
-  }
+append('user', txt);
+inp.value = '';
 
-  // normal flow
-  const typing = showTyping();
-  btn.disabled = true;
-  inp.disabled = true;
+const typing = showTyping();
+btn.disabled = true;
+inp.disabled = true;
 
-  try{
-    // نبعت للموجودة history + الرسالة الحالية للـ Worker للحصول على رد
-    const payloadMessages = historyMessages.concat([{ role: 'user', content: txt }]);
-    const res = await sendToWorker({ messages: payloadMessages });
-    typing.remove();
-    if(!res || !res.ok){
-      append('bot', 'النت فاصل ولا في مشكلة في السيرفر 😅');
-    } else {
-      const j = await res.json().catch(()=> ({}));
-      const reply = j.text || j.reply || 'مش فاهمك قوي 😅 جرب تاني';
-      append('bot', reply);
-      // خزن الرسائل في الهستوري
-      historyMessages.push({ role: 'user', content: txt }, { role: 'assistant', content: reply });
-    }
-  }catch(e){
-    try{ typing.remove(); }catch(_){}
-    append('bot', 'النت فاصل ولا إيه؟ 😅');
-  } finally {
-    btn.disabled = false;
-    inp.disabled = false;
-    inp.focus();
-  }
+try{
+const newMessage = {role:'user', content: txt};
+const res = await sendToWorker({messages: historyMessages.concat([newMessage])});
+typing.remove();
+
+if(!res || !res.ok){
+append('bot', 'النت فاصل ولا في مشكلة في السيرفر 😅');
+} else {
+    const j = await res.json().catch(()=> ({}));
+    const rawReply = j.text || j.reply || 'مش فاهمك قوي 😅 جرب تاني';
+    
+    // 💥 معالجة الرد: إزالة الكود السري للعرض
+    const processed = processBotReply(rawReply);
+    const replyForDisplay = processed.text;
+
+    append('bot', replyForDisplay);
+    // حفظ الرد الأصلي (مع الكود السري) في سجل المحادثة لاستخدامه في calculateFinalDiscount
+    historyMessages.push(newMessage, {role:'assistant', content: rawReply});
+}
+
+// 2. بدء العداد بعد أول رد من البوت
+if(!firstBotReplySent){
+    startTimer();
+    firstBotReplySent = true;
+}
+
+}catch(e){
+try{ typing.remove(); }catch(_){}
+append('bot', 'النت فاصل ولا إيه؟ 😅');
+} finally {
+btn.disabled = false;
+inp.disabled = false;
+inp.focus();
+}
 }
 
 openBtn.addEventListener('click', openChat);
 closeBtn.addEventListener('click', closeChat);
-btn.addEventListener('click', ()=> sendMessage());
-
+btn.addEventListener('click', sendMessage);
 inp.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter') sendMessage();
+if(e.key === 'Enter') sendMessage();
 });
 
+// التعامل مع الأزرار السريعة: زر "تمام" ينهي التفاوض مباشرة
 quick.addEventListener('click', (e)=>{
-  if(e.target.tagName === 'BUTTON'){
+if(e.target.tagName === 'BUTTON'){
     const text = e.target.dataset.text || '';
     const isFinal = e.target.dataset.finalize === 'true';
-    inp.value = text;
-    if(text){
-      sendMessage(isFinal);
+
+    if(isFinal){
+        // إذا كان زر "تمام"، نرسل الرسالة للمحادثة ثم ننهي الصفقة
+        inp.value = text;
+        append('user', text);
+        inp.value = '';
+        finalize();
+    } else {
+        // الأزرار الأخرى ترسل الرسالة كدردشة عادية
+        inp.value = text;
+        sendMessage();
     }
-  }
+}
 });
 
+// 5. التأكد من ظهور الـ input لما يفتح الكيبورد
+inp.addEventListener('focus', ()=>{
+setTimeout(()=>{
+const controls = document.querySelector('.controls');
+if(controls){
+controls.scrollIntoView({behavior:'smooth', block:'end'}); 
+}
+}, 300);
+});
+
+// مراقبة تغيير حجم الشاشة (الكيبورد)
+if(window.visualViewport){
+window.visualViewport.addEventListener('resize', ()=>{
+setTimeout(()=>{
+const controls = document.querySelector('.controls');
+if(controls){
+controls.scrollIntoView({behavior:'smooth', block:'end'});
+}
+}, 100);
+});
+}
+
 window.addEventListener('message', (ev)=>{
-  if(!ev.data || typeof ev.data.action !== 'string') return;
-  if(ev.data.action === 'closeChat') closeChat();
-  if(ev.data.action === 'focusInput'){
-    if(overlay.classList.contains('show')) setTimeout(()=> inp.focus(), 200);
-  }
+if(!ev.data || typeof ev.data.action !== 'string') return;
+if(ev.data.action === 'closeChat') closeChat();
+if(ev.data.action === 'focusInput'){
+if(overlay.classList.contains('show')) setTimeout(()=> inp.focus(), 200);
+}
 });
 
 window.addEventListener('keydown', (e)=>{
-  if(e.key === 'Escape' && overlay.classList.contains('show')) closeChat();
+if(e.key === 'Escape' && overlay.classList.contains('show')) closeChat();
 });
 
 overlay.addEventListener('touchmove', (e)=>{
-  if(e.target === overlay) e.preventDefault();
+if(e.target === overlay) e.preventDefault();
 }, {passive:false});
 
 window.__KAWKAB_CHAT = {
-  open: openChat,
-  close: closeChat,
-  sendMessageText: (t)=>{
-    inp.value = t;
-    sendMessage();
-  }
+open: openChat,
+close: closeChat,
+sendMessageText: (t)=>{
+inp.value = t;
+sendMessage();
+}
 };
 })();
 </script>
