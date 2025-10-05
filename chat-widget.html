@@ -654,11 +654,25 @@ async function finalizeEnhanced() {
       });
 
     } else if (choice === 'try') {
-      // لو أختر "جرب مرة تانية": نعيد تمكين الإدخال ونسمح بالاستمرار
+      // لو أختر "جرب مرة تانية": نعيد تمكين الإدخال ونرجع العداد والأزرار شغالة
       btn.disabled = false;
       inp.disabled = false;
       inp.focus();
-      finalized = false; // نسمح بالمحادثة
+
+      // أعد إظهار أزرار الأسرع (quick)
+      quick.style.display = '';
+
+      // اعد تهيئة العداد بحيث يبدأ من جديد
+      timerStarted = false; // بحيث يسمح startTimer بالعمل
+      stopTimer();
+      timeRemaining = 60;
+      timerDisplay.textContent = timeRemaining;
+      // إذا كانت الرسائل كفاية نعيد تشغيل العداد
+      if (historyMessages.length >= 2) {
+        startTimer();
+      }
+
+      finalized = false; // نسمح باستمرار المحادثة
     } else {
       // لو choice === null (يعني سبق عرضه) أو أي حالة أخرى: عرض النتيجة وحفظ بشكل افتراضي
       append('bot', finalDiscountText, true);
@@ -692,7 +706,7 @@ async function sendToWorker(payload){
 function startTimer(){
   if(timerInterval || timerStarted) return;
   timerStarted = true;
-  timeRemaining = 60;
+  timeRemaining = timeRemaining || 60;
   timerContainer.classList.add('active');
   timerDisplay.textContent = timeRemaining;
   timerInterval = setInterval(()=>{
