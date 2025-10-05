@@ -415,20 +415,16 @@ area.scrollTop = area.scrollHeight;
 }
 
 // وظيفة لاستخلاص نسبة الخصم من رسالة البوت
+// وظيفة لاستخلاص نسبة الخصم من رسالة البوت
 function extractDiscount(text){
-// يبحث عن نمط: عرض: رقم%
+// يبحث عن نمط: عرض: رقم% (الأولوية للصيغة الرسمية)
 const match = text.match(/عرض:\s*(\d+)%/);
 if(match && match[1]){
 return parseInt(match[1], 10);
 }
-// يمكن إضافة أنماط أخرى هنا إن لزم الأمر (مثل "خصم X%")
-const match2 = text.match(/خصم\s*(\d+)%/);
-if(match2 && match2[1]){
-return parseInt(match2[1], 10);
-}
 return null;
 }
-
+  
 function append(who, text, isResult = false){
 const w = document.createElement('div');
 w.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
@@ -511,7 +507,7 @@ const finalDiscountText = `${finalDiscount}%`;
 setTimeout(()=>{
 append('bot', finalDiscountText, true); // عرض النتيجة النهائية
 setTimeout(()=>{
-append('bot', 'شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊');
+append('bot', '، شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊، اكمل عملية شراءك والخصم سوف يطبق عن طريق خدمة العملاء');
 }, 1000);
 }, 500);
 }
@@ -542,7 +538,7 @@ overlay.classList.add('show');
 overlay.setAttribute('aria-hidden', 'false');
 openBtn.classList.add('hidden');
 if(!chatOpened){
-append('bot', 'أهلاً بيك في بوت كوكب! 🎉 قولّي إنت عايز تفاوض على إيه؟ 😎');
+append('bot', 'أهلاً بيك في كوكب بتاع الفصال! 🎉 قولّي تحب الخصم يبقى كام؟ 😎');
 chatOpened = true;
 }
 postToParent('chatOpened');
