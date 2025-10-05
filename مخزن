@@ -1,0 +1,851 @@
+الــ Chat_widget
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>بوت كوكب — فصال مباشر</title>
+<style>
+:root{
+--accent:#1a1a1a;
+--accent-2:#2d2d2d;
+--bg:#f7fbff;
+--card:#ffffff;
+--user-bg:#1a1a1a;
+--user-text:#ffffff;
+--bot-bg:#f3f4f6;
+--bot-text:#1f2937;
+--muted:#667085;
+--radius:16px;
+--shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:transparent;font-family:"Tahoma",system-ui;overflow:hidden}
+
+/* === تم تعديل هذا الجزء ليعرض النص كاملاً في شكل كبسولة (Pill Shape) === */
+.chat-fab {
+position:fixed;
+bottom:calc(70px + env(safe-area-inset-bottom, 0px)); 
+right:20px;
+z-index:9999;
+min-width:60px; /* أصبح الحد الأدنى للعرض 60px */
+height:60px; /* الارتفاع ثابت */
+padding:0 18px; /* إضافة مساحة حول النص */
+border-radius:999px; /* شكل كبسولة ليعرض النص كاملاً */
+background:linear-gradient(135deg,#2d2d2d,#1a1a1a);
+display:inline-flex; /* استخدام inline-flex */
+align-items:center; /* توسيط عمودي */
+justify-content:center; /* توسيط أفقي */
+color:#fff;
+font-size:14px;
+font-weight:700;
+cursor:pointer;
+box-shadow:0 4px 12px rgba(0,0,0,0.3);
+transition:transform .25s,opacity .25s;
+white-space:nowrap; /* منع النص من الالتفاف */
+}
+.chat-fab:hover{transform:scale(1.05)}
+.chat-fab.hidden{opacity:0;pointer-events:none}
+
+.chat-overlay {
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+display:none;
+background:rgba(0,0,0,0.5);
+z-index:10000;
+-webkit-backdrop-filter: blur(8px);
+backdrop-filter: blur(8px);
+}
+.chat-overlay.show{display:block}
+
+.chat-box {
+position:absolute;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:linear-gradient(to bottom, #f9fafb 0%, #ffffff 100%);
+display:grid;
+grid-template-rows: auto 1fr auto;
+overflow:hidden;
+}
+
+.header {
+background:linear-gradient(135deg,#1a1a1a,#2d2d2d);
+color:#fff;
+padding:16px 12px;
+padding-top:calc(16px + env(safe-area-inset-top,0px));
+display:flex;
+align-items:center;
+box-shadow:0 2px 12px rgba(0,0,0,0.15);
+}
+.header .title{
+flex:1;
+font-weight:700;
+font-size:17px;
+whitespace:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+display:flex;
+align-items:center;
+gap:8px;
+}
+.header .title::before{content:'💬'}
+.header .close{
+cursor:pointer;
+font-size:26px;
+background:rgba(255,255,255,0.15);
+border:none;
+color:#fff;
+width:38px;
+height:38px;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:0;
+border-radius:50%;
+transition:background .2s;
+}
+.header .close:hover{background:rgba(255,255,255,0.25)}
+
+.area{
+overflow-y:auto;
+overflow-x:hidden;
+padding:16px 12px;
+padding-bottom:40px;
+display:flex;
+flex-direction:column;
+gap:12px;
+-webkit-overflow-scrolling:touch;
+scroll-behavior:smooth;
+}
+
+.controls{
+background:#ffffff;
+border-top:1px solid #e5e7eb;
+padding:12px;
+padding-bottom:80px;
+display:flex;
+flex-direction:column;
+gap:10px;
+box-shadow:0 -4px 16px rgba(0,0,0,0.06);
+}
+
+.timer-container{
+display:none;
+align-items:center;
+justify-content:center;
+padding:12px;
+background:linear-gradient(135deg, #fef3c7, #fde68a);
+border-radius:12px;
+gap:8px;
+animation:pulse 2s ease-in-out infinite;
+}
+.timer-container.active{display:flex}
+.timer-text{
+font-size:14px;
+font-weight:600;
+color:#92400e;
+}
+.timer-count{
+font-size:18px;
+font-weight:700;
+color:#b45309;
+min-width:35px;
+text-align:center;
+}
+@keyframes pulse{
+0%,100%{transform:scale(1)}
+50%{transform:scale(1.02)}
+}
+
+@media (min-width:700px){
+.controls{
+padding-bottom:16px;
+box-shadow:none;
+}
+}
+
+.input{
+display:flex;
+gap:8px;
+align-items:stretch;
+}
+.input input{
+flex:1;
+padding:14px 16px;
+border-radius:24px;
+border:2px solid #e5e7eb;
+font-size:15px;
+min-width:0;
+background:#ffffff;
+transition:border-color .2s, box-shadow .2s;
+}
+.input input:focus{
+outline:none;
+border-color:#2d2d2d;
+box-shadow:0 0 0 3px rgba(45,45,45,0.1);
+}
+.btn{
+padding:12px 24px;
+border-radius:24px;
+border:none;
+background:linear-gradient(135deg,#2d2d2d,#1a1a1a);
+color:#fff;
+cursor:pointer;
+font-weight:600;
+min-width:80px;
+box-shadow:0 2px 8px rgba(0,0,0,0.2);
+transition:transform .2s, box-shadow .2s;
+}
+.btn:hover{
+transform:translateY(-1px);
+box-shadow:0 4px 12px rgba(0,0,0,0.3);
+}
+.btn:active{
+transform:translateY(0);
+}
+.btn:disabled{
+opacity:0.6;
+cursor:not-allowed;
+transform:none;
+}
+
+.quick{display:flex;gap:8px;flex-wrap:wrap}
+.quick button{
+padding:10px 16px;
+border-radius:20px;
+border:2px solid #e5e7eb;
+background:#ffffff;
+font-size:13px;
+cursor:pointer;
+color:#1a1a1a;
+font-weight:500;
+transition:all .2s;
+}
+.quick button:hover{
+border-color:#2d2d2d;
+background:#f9fafb;
+transform:translateY(-1px);
+}
+
+.msg{
+display:flex;
+max-width:80%;
+flex-direction:column;
+word-break:break-word;
+animation:slideIn .3s ease-out;
+}
+@keyframes slideIn{
+from{opacity:0;transform:translateY(10px)}
+to{opacity:1;transform:translateY(0)}
+}
+
+.msg.user{
+align-self:flex-end;
+align-items:flex-end;
+}
+.msg.user .bubble{
+background:linear-gradient(135deg,#2d2d2d,#1a1a1a);
+color:var(--user-text);
+border-radius:18px 18px 4px 18px;
+padding:12px 16px;
+box-shadow:var(--shadow);
+}
+
+.msg.bot{
+align-self:flex-start;
+align-items:flex-start;
+}
+.msg.bot .bubble{
+background:var(--bot-bg);
+color:var(--bot-text);
+border-radius:18px 18px 18px 4px;
+padding:12px 16px;
+box-shadow:var(--shadow);
+border:1px solid #e5e7eb;
+}
+
+.meta{
+font-size:11px;
+color:var(--muted);
+margin-top:6px;
+padding:0 4px;
+}
+
+.typing{
+display:flex;
+gap:4px;
+padding:4px 0;
+}
+.typing span{
+width:8px;
+height:8px;
+background:var(--muted);
+border-radius:50%;
+display:inline-block;
+animation:dot 1.4s infinite;
+}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes dot{
+0%,60%,100%{opacity:.3;transform:translateY(0) scale(0.8)}
+30%{opacity:1;transform:translateY(-6px) scale(1)}
+}
+
+.result-msg{
+background:linear-gradient(135deg, #dcfce7, #bbf7d0);
+border:2px solid #86efac;
+border-radius:16px;
+padding:16px;
+margin:8px 0;
+text-align:center;
+animation:celebrate .6s ease-out;
+}
+.result-msg .result-title{
+font-size:18px;
+font-weight:700;
+color:#15803d;
+margin-bottom:8px;
+}
+.result-msg .result-value{
+font-size:32px;
+font-weight:900;
+color:#16a34a;
+text-shadow:0 2px 4px rgba(22,163,74,0.2);
+}
+@keyframes celebrate{
+0%{transform:scale(0.8) rotate(-5deg);opacity:0}
+50%{transform:scale(1.05) rotate(2deg)}
+100%{transform:scale(1) rotate(0);opacity:1}
+}
+
+@media (min-width:700px){
+.chat-overlay{
+display:none;
+align-items:center;
+justify-content:center;
+}
+.chat-overlay.show{display:flex}
+.chat-box{
+position:relative;
+width:640px;
+height:90vh;
+max-height:800px;
+border-radius:16px;
+box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
+.chat-fab{right:28px;bottom:78px}
+}
+</style>
+</head>
+<body>
+
+<div class="chat-fab" id="openChat" role="button" aria-label="افتح الشات">فصال</div> 
+
+<div class="chat-overlay" id="chatOverlay" aria-hidden="true">
+<div class="chat-box" role="dialog" aria-modal="true" aria-label="بوت كوكب">
+<div class="header">
+<div class="title">بوت كوكب — فصال مباشر</div>
+<button class="close" id="closeChat" aria-label="اغلاق">×</button>
+</div>
+<div class="area" id="area" tabindex="0" aria-live="polite" aria-atomic="false"></div>
+<div class="controls">
+<div class="timer-container" id="timerContainer">
+<span class="timer-text">⏱️ الوقت المتبقي:</span>
+<span class="timer-count" id="timerDisplay">60</span>
+<span class="timer-text">ثانية</span>
+</div>
+<div class="quick" id="quickActions" aria-hidden="false">
+<button data-text="أريد أفضل عرض">🎯 أفضل عرض</button>
+<button data-text="هل في خصم أعلى؟">💰 خصم أعلى</button>
+<button data-text="تمام" data-finalize="true">✅ تمام</button>
+</div>
+<div class="input">
+<input id="inp" type="text" placeholder="اكتب رسالتك هنا..." aria-label="اكتب رسالتك" autocomplete="off" />
+<button id="btn" class="btn" aria-label="أرسل">إرسال</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+const openBtn = document.getElementById('openChat');
+const overlay = document.getElementById('chatOverlay');
+const closeBtn = document.getElementById('closeChat');
+const area = document.getElementById('area');
+const inp = document.getElementById('inp');
+const btn = document.getElementById('btn');
+const quick = document.getElementById('quickActions');
+const timerContainer = document.getElementById('timerContainer');
+const timerDisplay = document.getElementById('timerDisplay');
+
+const WORKER_URL = 'https://kawkab.kawkab-arabia.workers.dev/';
+
+let historyMessages = [], chatOpened = false, finalized = false;
+let timerInterval = null;
+let timeRemaining = 60;
+let timerStarted = false;
+let lastDiscountPercent = null; // متغير لحفظ آخر نسبة خصم تم ذكرها
+
+function postToParent(action){
+try{
+if(window.parent && window.parent !== window){
+window.parent.postMessage({action}, '*');
+}
+}catch(e){}
+}
+
+function safeText(s){
+const d = document.createElement('div');
+d.textContent = s;
+return d.innerHTML;
+}
+
+function scrollToBottom(){
+requestAnimationFrame(()=>{
+area.scrollTop = area.scrollHeight;
+});
+}
+
+// وظيفة لاستخلاص نسبة الخصم من رسالة البوت
+// وظيفة لاستخلاص نسبة الخصم من رسالة البوت
+function extractDiscount(text){
+// يبحث عن نمط: عرض: رقم% (الأولوية للصيغة الرسمية)
+const match = text.match(/عرض:\s*(\d+)%/);
+if(match && match[1]){
+return parseInt(match[1], 10);
+}
+return null;
+}
+  
+function append(who, text, isResult = false){
+const w = document.createElement('div');
+w.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
+const b = document.createElement('div');
+b.className = isResult ? 'result-msg' : 'bubble';
+
+if(who === 'bot' && !isResult){
+const discount = extractDiscount(text);
+if(discount !== null){
+lastDiscountPercent = discount; // حفظ آخر نسبة خصم
+}
+}
+
+if(isResult){
+// يتم استخدام النص المرسل كنتيجة نهائية
+b.innerHTML = `<div class="result-title">🎉 مبروك! خصمك النهائي</div><div class="result-value">${safeText(text)}</div>`;
+} else {
+b.innerHTML = safeText(text);
+}
+
+w.appendChild(b);
+
+if(!isResult){
+const m = document.createElement('div');
+m.className = 'meta';
+const now = new Date();
+const time = now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+m.textContent = time;
+w.appendChild(m);
+}
+area.appendChild(w);
+scrollToBottom();
+}
+
+function showTyping(){
+const el = document.createElement('div');
+el.className = 'msg bot';
+el.innerHTML = '<div class="bubble"><div class="typing" aria-hidden="true"><span></span><span></span><span></span></div></div>';
+area.appendChild(el);
+scrollToBottom();
+return el;
+}
+
+function startTimer(){
+if(timerInterval || timerStarted) return;
+timerStarted = true;
+timeRemaining = 60;
+timerContainer.classList.add('active');
+timerDisplay.textContent = timeRemaining;
+timerInterval = setInterval(()=>{
+timeRemaining--;
+timerDisplay.textContent = timeRemaining;
+if(timeRemaining <= 0){
+stopTimer();
+finalize();
+}
+}, 1000);
+}
+
+function stopTimer(){
+if(timerInterval){
+clearInterval(timerInterval);
+timerInterval = null;
+}
+timerContainer.classList.remove('active');
+}
+
+function finalize(){
+if(finalized) return;
+finalized = true;
+stopTimer();
+btn.disabled = true;
+inp.disabled = true;
+quick.style.display = 'none';
+
+// يتم تحديد الخصم النهائي (آخر خصم تم حفظه أو 5% افتراضي)
+const finalDiscount = lastDiscountPercent !== null ? lastDiscountPercent : 5;
+const finalDiscountText = `${finalDiscount}%`;
+
+setTimeout(()=>{
+append('bot', finalDiscountText, true); // عرض النتيجة النهائية
+setTimeout(()=>{
+append('bot', '، شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊، اكمل عملية شراءك والخصم سوف يطبق عن طريق خدمة العملاء');
+}, 1000);
+}, 500);
+}
+
+// تم الإبقاء على هذا لتمكين "Scroll into view" عند التركيز اليدوي
+inp.addEventListener('focus', ()=>{
+setTimeout(()=>{
+const controls = document.querySelector('.controls');
+if(controls){
+controls.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+}, 300);
+});
+
+if(window.visualViewport){
+window.visualViewport.addEventListener('resize', ()=>{
+setTimeout(()=>{
+const controls = document.querySelector('.controls');
+if(controls){
+controls.scrollIntoView({behavior:'smooth', block:'end'});
+}
+}, 100);
+});
+}
+
+function openChat(){
+overlay.classList.add('show');
+overlay.setAttribute('aria-hidden', 'false');
+openBtn.classList.add('hidden');
+if(!chatOpened){
+append('bot', 'أهلاً بيك في كوكب بتاع الفصال! 🎉 قولّي تحب الخصم يبقى كام؟ 😎');
+chatOpened = true;
+}
+postToParent('chatOpened');
+setTimeout(()=>{
+scrollToBottom();
+// هنا تم إبقاء التركيز لفتح الكيبورد عند فتح الشات لأول مرة فقط
+inp.focus(); 
+}, 400);
+}
+
+function closeChat(){
+overlay.classList.remove('show');
+overlay.setAttribute('aria-hidden', 'true');
+openBtn.classList.remove('hidden');
+postToParent('chatClosed');
+inp.blur();
+setTimeout(()=> openBtn.focus(), 200);
+}
+
+async function sendToWorker(payload){
+try{
+const res = await fetch(WORKER_URL, {
+method: 'POST',
+headers: {'Content-Type':'application/json'},
+body: JSON.stringify(payload),
+});
+return res;
+}catch(e){
+throw e;
+}
+}
+
+async function sendMessage(isFinal = false){
+const txt = inp.value.trim();
+if(!txt || finalized) return;
+append('user', txt);
+inp.value = '';
+
+if(isFinal){
+finalize();
+return;
+}
+
+const typing = showTyping();
+btn.disabled = true;
+inp.disabled = true;
+inp.blur(); // إزالة التركيز عند الإرسال لمنع فتح الكيبورد/الشاشة الافتراضية
+
+  try{
+    // أرسل آخر خصم رسمي معروف للـ worker علشان يبني عليه
+    const payload = {
+      messages: historyMessages.concat([{role:'user', content: txt}]),
+      last_official_discount: lastDiscountPercent !== null ? lastDiscountPercent : null
+    };
+
+    const res = await sendToWorker(payload);
+    typing.remove();
+    if(!res || !res.ok){
+      append('bot', 'النت فاصل ولا في مشكلة في السيرفر 😅');
+    } else {
+      const j = await res.json().catch(()=> ({}));
+      const reply = j.text || j.reply || 'مش فاهمك قوي 😅 جرب تاني';
+
+      // **هنا نحدث المتغير من الحقل الرسمي المرجع في الرد** (لو الوركر رجع واحد)
+      if (typeof j.last_official_discount !== 'undefined' && j.last_official_discount !== null) {
+        const parsed = Number(j.last_official_discount);
+        if (!Number.isNaN(parsed)) lastDiscountPercent = Math.round(parsed);
+      }
+
+      append('bot', reply);
+      historyMessages.push({role:'user', content: txt}, {role:'assistant', content: reply});
+
+      // لو الموديل كتب "عرض: X%" داخل النص، فانكشن extractDiscount هيحدّث lastDiscountPercent تلقائياً لأن append يستدعيه.
+      if(!timerStarted && historyMessages.length >= 2){
+        startTimer();
+      }
+    }
+  }catch(e){
+
+try{ typing.remove(); }catch(_){}
+append('bot', 'النت فاصل ولا إيه؟ 😅');
+} finally {
+btn.disabled = false;
+inp.disabled = false;
+// تم حذف inp.focus() هنا لمنع فتح الكيبورد تلقائيًا بعد رد البوت
+}
+}
+
+openBtn.addEventListener('click', openChat);
+closeBtn.addEventListener('click', closeChat);
+btn.addEventListener('click', ()=> sendMessage());
+inp.addEventListener('keydown', (e)=>{
+if(e.key === 'Enter') sendMessage();
+});
+
+quick.addEventListener('click', (e)=>{
+if(e.target.tagName === 'BUTTON'){
+const text = e.target.dataset.text || '';
+const isFinal = e.target.dataset.finalize === 'true';
+inp.value = text;
+if(text){
+sendMessage(isFinal);
+}
+}
+});
+
+window.addEventListener('message', (ev)=>{
+if(!ev.data || typeof ev.data.action !== 'string') return;
+if(ev.data.action === 'closeChat') closeChat();
+if(ev.data.action === 'focusInput'){
+if(overlay.classList.contains('show')) setTimeout(()=> inp.focus(), 200);
+}
+});
+
+window.addEventListener('keydown', (e)=>{
+if(e.key === 'Escape' && overlay.classList.contains('show')) closeChat();
+});
+
+overlay.addEventListener('touchmove', (e)=>{
+if(e.target === overlay) e.preventDefault();
+}, {passive:false});
+
+window.__KAWKAB_CHAT = {
+open: openChat,
+close: closeChat,
+sendMessageText: (t)=>{
+inp.value = t;
+sendMessage();
+}
+};
+})();
+</script>
+</body>
+</html>
+
+
+كود الــ Worker
+export default {
+  async fetch(request, env) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+      });
+    }
+
+    try {
+      const HF_TOKEN = env.HF_TOKEN;
+      if (!HF_TOKEN) {
+        return new Response(JSON.stringify({ error: "HF_TOKEN not configured" }), {
+          status: 500,
+          headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
+        });
+      }
+
+      let body = {};
+      try { body = await request.json(); } catch {
+        const txt = (await request.text()).trim();
+        if (txt) {
+          try { body = JSON.parse(txt); } catch { body = { text: txt }; }
+        }
+      }
+
+      const msgsIn = Array.isArray(body.messages) ? body.messages : [];
+      const finalize = !!body.finalize;
+      const percentOverride = Number.isFinite(Number(body.percent_override)) ? Number(body.percent_override) : null;
+      const lastOfficialDiscount = typeof body.last_official_discount === 'number' ? body.last_official_discount : null;
+
+      // System prompt محسّن مع قواعد ذكية للخصم
+      const systemPrompt = `إنت "بوت كوكب" — بتفاوض للماركة الكاجوال المصرية "كوكب".
+
+**قواعد الخصم الذكية:**
+1. الخصم الأولي: ابدأ بـ 5% فقط، وقول "عرض: 5%" في أول سطر.
+2. الزيادة التدريجية: 
+   - لو العميل طلب كمية (2-5 قطع) → زوّد 3-5%
+   - لو كمية كبيرة (6+ قطع) → زوّد 5-8%
+   - لو العميل استعطفك زود 5% بس متخليهوش يستغلك أوي
+   - لو عرض حاجات منطقية زي إنه هيقول لأصحابه علينا وغيره
+3. الحد الأقصى: 30% (ممنوع تتجاوزه نهائياً)
+4. **صيغة العرض الإلزامية:** لو هتدّي خصم، اكتب في أول سطر بالضبط: "عرض: X%" (X رقم فقط)
+5. لا تذكر أي نسبة خصم تانية في الرسالة غير السطر الرسمي
+6. استراتيجية المراوغة:
+   - اسأل عن الكمية قبل ما تزوّد
+   - اسأل عن حوار هل هيجيب اصحابه وقرايبه
+   - حاول تاخد من العميل كلام بيأكد إنه حابب المنتج أو هيشتري فورا
+   - لو العميل ضاغط أوي، زوّد شوية بس (2-3% مش أكتر)
+7. الأسلوب: عامية مصرية ودية، ردود قصيرة جداً (سطر أو اثنين)
+8. لو العميل قال "تمام" أو "موافق" أو "ماشي" → الصفقة انتهت
+
+**آخر خصم رسمي معروف:** ${lastOfficialDiscount !== null ? lastOfficialDiscount + '%' : 'لسه مافيش'}
+
+**مهم جداً:** 
+- لو آخر خصم كان X%، ماتنزلش تحته أبداً
+- لو هتزوّد، زوّد بس لو العميل قدّم معلومات جديدة (كمية/دفع)
+- لو مافيش سبب واضح، قول "ده أحسن عرض ممكن" وخلاص`;
+
+      const hfMessages = [{ role: "system", content: systemPrompt }];
+      for (const m of msgsIn) {
+        if (m && m.role && typeof m.content === "string") hfMessages.push({ role: m.role, content: m.content });
+      }
+
+      // حالة finalize مع تبرير
+      if (finalize && percentOverride) {
+        hfMessages.push({
+          role: "system",
+          content: `FINALIZE: برّر الخصم ${percentOverride}% في سطر واحد ودود بالعامية المصرية. لا تذكر أي نسبة تانية.`,
+        });
+
+        const hfRes = await fetch("https://router.huggingface.co/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${HF_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "deepseek-ai/DeepSeek-V3.2-Exp:novita",
+            messages: hfMessages,
+            stream: false,
+            temperature: 0.7,
+            max_tokens: 150
+          }),
+        });
+
+        const txt = await hfRes.text();
+        let j = null;
+        try { j = JSON.parse(txt); } catch(e){ /* ignore */ }
+
+        if (!hfRes.ok) {
+          return new Response(JSON.stringify({ error: "HF router error", details: j ?? txt }), {
+            status: 502,
+            headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
+          });
+        }
+
+        const assistantContent = j?.choices?.[0]?.message?.content ?? String(j ?? txt);
+        return new Response(JSON.stringify({
+          finalize: true,
+          percent: percentOverride,
+          reason: String(assistantContent).trim()
+        }), {
+          status: 200,
+          headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
+        });
+      }
+
+      // تفاعل عادي
+      const hfRes = await fetch("https://router.huggingface.co/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${HF_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "deepseek-ai/DeepSeek-V3.2-Exp:novita",
+          messages: hfMessages,
+          stream: false,
+          temperature: 0.8,
+          max_tokens: 200
+        }),
+      });
+
+      const txt = await hfRes.text();
+      let j = null;
+      try { j = JSON.parse(txt); } catch(e){ /* ignore */ }
+
+      if (!hfRes.ok) {
+        return new Response(JSON.stringify({ error: "HF router error", details: j ?? txt }), {
+          status: 502,
+          headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
+        });
+      }
+
+      const assistantContent = j?.choices?.[0]?.message?.content ?? String(j ?? txt);
+
+      // استخراج الخصم الرسمي من الرد
+      let officialDiscount = lastOfficialDiscount;
+      const offerMatch = assistantContent.match(/عرض:\s*(\d+)%/i);
+      if (offerMatch) {
+        const newDiscount = parseInt(offerMatch[1], 10);
+        // التحقق من صحة الخصم (بين 1-30%)
+        if (newDiscount >= 1 && newDiscount <= 30) {
+          // التأكد أن الخصم الجديد أكبر أو يساوي القديم
+          if (officialDiscount === null || newDiscount >= officialDiscount) {
+            officialDiscount = newDiscount;
+          }
+        }
+      }
+
+      return new Response(JSON.stringify({
+        text: assistantContent,
+        last_official_discount: officialDiscount,
+        raw: j
+      }), {
+        status: 200,
+        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
+      });
+
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 500,
+        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
+      });
+    }
+  }
+};
