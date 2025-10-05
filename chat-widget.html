@@ -651,7 +651,7 @@ timestamp: new Date().toISOString()
 
 sendNotify(notifyPayload).then(ok=>{
 if(!ok){
-append('bot', 'معلش، حصلت مشكلة في ارسال الاشعار للتيليجرام — شوف سجل السيرفر.');
+append('bot', 'معلش، حصلت مشكلة في ارسال الاشعار لخدمة العملاء — شوف سجل السيرفر.');
 }
 });
 
@@ -699,7 +699,7 @@ overlay.setAttribute('aria-hidden', 'false');
 openBtn.classList.add('hidden');
 
 if(!chatOpened){
-append('bot', 'أهلاً بيك في كوكب بتاع الفصال! 🎉 ممكن في البداية تديني رقم التلفون اللي هتشتري بيه؟');
+append('bot', 'أهلاً بيك في كوكب للفصال! 🎉 ممكن في البداية تديني رقم التلفون -إنجليزي- اللي هتشتري بيه؟');
 chatOpened = true;
 }
 
@@ -743,7 +743,7 @@ const digits = isPhone(txtRaw);
 if(!digits){
 append('user', txtRaw);
 inp.value = '';
-append('bot', 'الرقم ده مش واضح — اكتب رقمك من غير مسافات أو أحرف (مثال: 01012345678)');
+append('bot', 'الرقم ده مش واضح — اكتب رقمك من غير مسافات أو أحرف لازم إنجليزي (مثال: 01012345678)');
 return;
 }
 customerPhone = digits;
