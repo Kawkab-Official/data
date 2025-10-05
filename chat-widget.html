@@ -789,7 +789,7 @@ function updateButtonState() {
 const daysLeft = checkIfBlocked();
 if (daysLeft) {
 openBtn.classList.add('disabled');
-openBtn.textContent = `محظور (${daysLeft} يوم)`;
+openBtn.textContent = `انتظر (${daysLeft} يوم)`;
 openBtn.style.pointerEvents = 'none';
 isBlocked = true;
 } else {
