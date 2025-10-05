@@ -44,12 +44,10 @@ white-space:nowrap;
 }
 .chat-fab:hover{transform:scale(1.05)}
 .chat-fab.hidden{opacity:0;pointer-events:none}
-.chat-fab.disabled{
-opacity:0.5;
+.chat-fab.blocked{
+background:linear-gradient(135deg,#dc2626,#b91c1c);
 cursor:not-allowed;
-background:linear-gradient(135deg,#6b7280,#4b5563);
 }
-.chat-fab.disabled:hover{transform:scale(1)}
 
 .chat-overlay {
 position:fixed;
@@ -161,31 +159,10 @@ color:#b45309;
 min-width:35px;
 text-align:center;
 }
+
 @keyframes pulse{
 0%,100%{transform:scale(1)}
 50%{transform:scale(1.02)}
-}
-
-.blocked-notice{
-display:none;
-background:linear-gradient(135deg, #fee2e2, #fecaca);
-border:2px solid #f87171;
-border-radius:12px;
-padding:16px;
-margin:8px;
-text-align:center;
-}
-.blocked-notice.show{display:block}
-.blocked-notice .title{
-font-size:18px;
-font-weight:700;
-color:#991b1b;
-margin-bottom:8px;
-}
-.blocked-notice .message{
-font-size:14px;
-color:#7f1d1d;
-line-height:1.6;
 }
 
 @media (min-width:700px){
@@ -344,10 +321,44 @@ font-weight:900;
 color:#16a34a;
 text-shadow:0 2px 4px rgba(22,163,74,0.2);
 }
+
+.blocked-msg{
+background:linear-gradient(135deg, #fecaca, #fca5a5);
+border:2px solid #f87171;
+border-radius:16px;
+padding:20px;
+margin:8px 0;
+text-align:center;
+animation:shake .5s ease-out;
+}
+.blocked-msg .blocked-title{
+font-size:20px;
+font-weight:700;
+color:#991b1b;
+margin-bottom:12px;
+}
+.blocked-msg .blocked-text{
+font-size:15px;
+color:#7f1d1d;
+line-height:1.6;
+}
+.blocked-msg .blocked-timer{
+font-size:24px;
+font-weight:900;
+color:#dc2626;
+margin-top:12px;
+}
+
 @keyframes celebrate{
 0%{transform:scale(0.8) rotate(-5deg);opacity:0}
 50%{transform:scale(1.05) rotate(2deg)}
 100%{transform:scale(1) rotate(0);opacity:1}
+}
+
+@keyframes shake{
+0%,100%{transform:translateX(0)}
+25%{transform:translateX(-10px)}
+75%{transform:translateX(10px)}
 }
 
 @media (min-width:700px){
@@ -370,6 +381,7 @@ box-shadow:0 20px 60px rgba(0,0,0,0.3);
 </style>
 </head>
 <body>
+
 <div class="chat-fab" id="openChat" role="button" aria-label="افتح الشات">فصال</div>
 
 <div class="chat-overlay" id="chatOverlay" aria-hidden="true">
@@ -378,14 +390,7 @@ box-shadow:0 20px 60px rgba(0,0,0,0.3);
 <div class="title">بوت كوكب — فصال مباشر</div>
 <button class="close" id="closeChat" aria-label="اغلاق">×</button>
 </div>
-
-<div class="blocked-notice" id="blockedNotice">
-<div class="title">⏳ عذراً!</div>
-<div class="message" id="blockedMessage">انت خدت خصمك بالفعل. تقدر تستخدم البوت تاني بعد <strong id="daysLeft"></strong> يوم.</div>
-</div>
-
 <div class="area" id="area" tabindex="0" aria-live="polite" aria-atomic="false"></div>
-
 <div class="controls">
 <div class="timer-container" id="timerContainer">
 <span class="timer-text">⏱️ الوقت المتبقي:</span>
@@ -418,15 +423,14 @@ const btn = document.getElementById('btn');
 const quick = document.getElementById('quickActions');
 const timerContainer = document.getElementById('timerContainer');
 const timerDisplay = document.getElementById('timerDisplay');
-const blockedNotice = document.getElementById('blockedNotice');
-const blockedMessage = document.getElementById('blockedMessage');
-const daysLeftSpan = document.getElementById('daysLeft');
 
 const WORKER_URL = 'https://kawkab.kawkab-arabia.workers.dev/';
 const TELEGRAM_NOTIFY_URL = 'https://kawkab2telegram.kawkab-arabia.workers.dev/';
 const NOTIFY_SECRET = '{hgjffhh54321}';
-const COOKIE_NAME = 'kawkab_discount_used';
-const BLOCK_DAYS = 14; // أسبوعين
+
+// مدة المنع بالميلي ثانية (14 يوم = أسبوعين)
+const COOLDOWN_DURATION = 14 * 24 * 60 * 60 * 1000;
+const STORAGE_KEY = 'kawkab_cooldown_end';
 
 let historyMessages = [], chatOpened = false, finalized = false;
 let timerInterval = null;
@@ -437,49 +441,73 @@ let customerPhone = null;
 let customerName = null;
 let isBlocked = false;
 
-// === وظائف الكوكيز ===
-function setCookie(name, value, days) {
-const d = new Date();
-d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-const expires = "expires=" + d.toUTCString();
-document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Strict";
-}
-
-function getCookie(name) {
-const nameEQ = name + "=";
-const ca = document.cookie.split(';');
-for(let i = 0; i < ca.length; i++) {
-let c = ca[i];
-while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-}
-return null;
-}
-
-function checkIfBlocked() {
-const cookieValue = getCookie(COOKIE_NAME);
-if (!cookieValue) return false;
-
-try {
-const expiryTime = parseInt(cookieValue, 10);
+// التحقق من حالة المنع عند التحميل
+function checkCooldown(){
+try{
+const cooldownEnd = localStorage.getItem(STORAGE_KEY);
+if(!cooldownEnd) return false;
+const endTime = parseInt(cooldownEnd, 10);
+if(isNaN(endTime)) return false;
 const now = Date.now();
-if (now < expiryTime) {
-const daysLeft = Math.ceil((expiryTime - now) / (1000 * 60 * 60 * 24));
-return daysLeft;
-}
-} catch(e) {
-return false;
-}
-return false;
-}
-
-function blockUser() {
-const expiryTime = Date.now() + (BLOCK_DAYS * 24 * 60 * 60 * 1000);
-setCookie(COOKIE_NAME, expiryTime.toString(), BLOCK_DAYS);
+if(now < endTime){
 isBlocked = true;
+return true;
+}
+// انتهى المنع، احذف المفتاح
+localStorage.removeItem(STORAGE_KEY);
+return false;
+}catch(e){
+return false;
+}
 }
 
-// === باقي الوظائف الأصلية ===
+// حساب الوقت المتبقي
+function getRemainingTime(){
+try{
+const cooldownEnd = localStorage.getItem(STORAGE_KEY);
+if(!cooldownEnd) return 0;
+const endTime = parseInt(cooldownEnd, 10);
+const now = Date.now();
+const remaining = endTime - now;
+return remaining > 0 ? remaining : 0;
+}catch(e){
+return 0;
+}
+}
+
+// تنسيق الوقت المتبقي
+function formatRemainingTime(ms){
+const days = Math.floor(ms / (24 * 60 * 60 * 1000));
+const hours = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+if(days > 0) return `${days} يوم و ${hours} ساعة`;
+if(hours > 0) return `${hours} ساعة و ${minutes} دقيقة`;
+return `${minutes} دقيقة`;
+}
+
+// تعيين المنع
+function setCooldown(){
+try{
+const endTime = Date.now() + COOLDOWN_DURATION;
+localStorage.setItem(STORAGE_KEY, endTime.toString());
+isBlocked = true;
+updateFabAppearance();
+}catch(e){
+console.error('فشل حفظ المنع:', e);
+}
+}
+
+// تحديث شكل الزر
+function updateFabAppearance(){
+if(isBlocked){
+openBtn.classList.add('blocked');
+openBtn.textContent = '🔒 ممنوع';
+}else{
+openBtn.classList.remove('blocked');
+openBtn.textContent = 'فصال';
+}
+}
+
 function postToParent(action){
 try{
 if(window.parent && window.parent !== window){
@@ -508,13 +536,13 @@ return parseInt(match[1], 10);
 return null;
 }
 
-function append(who, text, isResult = false){
+function append(who, text, isResult = false, isBlocked = false){
 const w = document.createElement('div');
 w.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
 const b = document.createElement('div');
-b.className = isResult ? 'result-msg' : 'bubble';
+b.className = isResult ? 'result-msg' : (isBlocked ? 'blocked-msg' : 'bubble');
 
-if(who === 'bot' && !isResult){
+if(who === 'bot' && !isResult && !isBlocked){
 const discount = extractDiscount(text);
 if(discount !== null){
 lastDiscountPercent = discount;
@@ -523,13 +551,15 @@ lastDiscountPercent = discount;
 
 if(isResult){
 b.innerHTML = `<div class="result-title">🎉 مبروك! خصمك النهائي</div><div class="result-value">${safeText(text)}</div>`;
+} else if(isBlocked){
+b.innerHTML = text;
 } else {
 b.innerHTML = safeText(text);
 }
 
 w.appendChild(b);
 
-if(!isResult){
+if(!isResult && !isBlocked){
 const m = document.createElement('div');
 m.className = 'meta';
 const now = new Date();
@@ -557,7 +587,6 @@ timerStarted = true;
 timeRemaining = 60;
 timerContainer.classList.add('active');
 timerDisplay.textContent = timeRemaining;
-
 timerInterval = setInterval(()=>{
 timeRemaining--;
 timerDisplay.textContent = timeRemaining;
@@ -606,12 +635,11 @@ const finalDiscountText = `${finalDiscount}%`;
 
 setTimeout(()=>{
 append('bot', finalDiscountText, true);
-
 setTimeout(()=>{
-append('bot', '.شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊، اكمل عملية شراءك والخصم سوف يطبق عن طريق خدمة العملاء');
+append('bot', 'شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊 اكمل عملية شراءك والخصم سوف يطبق عن طريق خدمة العملاء');
 
-// حفظ الكوكيز لمنع الاستخدام مرة تانية
-blockUser();
+// تعيين المنع لمدة أسبوعين
+setCooldown();
 
 const notifyPayload = {
 phone: customerPhone || null,
@@ -623,9 +651,15 @@ timestamp: new Date().toISOString()
 
 sendNotify(notifyPayload).then(ok=>{
 if(!ok){
-append('bot', 'معلش، حصلت مشكلة في ارسال الاشعار لخدمة العملاء — شوف سجل السيرفر.');
+append('bot', 'معلش، حصلت مشكلة في ارسال الاشعار للتيليجرام — شوف سجل السيرفر.');
 }
 });
+
+setTimeout(()=>{
+const remaining = formatRemainingTime(COOLDOWN_DURATION);
+append('bot', `⏰ ملحوظة: البوت هيكون متاح ليك تاني بعد أسبوعين (${remaining}) 🔒`);
+}, 1500);
+
 }, 1000);
 }, 500);
 }
@@ -636,18 +670,25 @@ return digits.length >= 8 && digits.length <= 15 ? digits : null;
 }
 
 function openChat(){
-// التحقق من الحظر قبل فتح الشات
-const daysLeft = checkIfBlocked();
-if (daysLeft) {
+// التحقق من حالة المنع قبل فتح الشات
+if(checkCooldown()){
 overlay.classList.add('show');
 overlay.setAttribute('aria-hidden', 'false');
 openBtn.classList.add('hidden');
 
-// إخفاء المحتوى العادي وعرض رسالة الحظر
-area.style.display = 'none';
-document.querySelector('.controls').style.display = 'none';
-blockedNotice.classList.add('show');
-daysLeftSpan.textContent = daysLeft;
+const remaining = getRemainingTime();
+const formattedTime = formatRemainingTime(remaining);
+
+const blockedHTML = `<div class="blocked-title">🔒 عذراً، البوت مش متاح دلوقتي</div>
+<div class="blocked-text">انت خدت خصمك بالفعل! البوت هيكون متاح ليك تاني بعد:</div>
+<div class="blocked-timer">${formattedTime}</div>
+<div class="blocked-text" style="margin-top:12px;">شكراً لتفهمك 🙏</div>`;
+
+append('bot', blockedHTML, false, true);
+
+btn.disabled = true;
+inp.disabled = true;
+quick.style.display = 'none';
 
 postToParent('chatOpened');
 return;
@@ -658,7 +699,7 @@ overlay.setAttribute('aria-hidden', 'false');
 openBtn.classList.add('hidden');
 
 if(!chatOpened){
-append('bot', 'أهلاً بيك في كوكب بتاع الفصال! 🎉 ممكن في البداية تديني رقم التلفون -إنجليزي- اللي هتشتري بيه؟');
+append('bot', 'أهلاً بيك في كوكب بتاع الفصال! 🎉 ممكن في البداية تديني رقم التلفون اللي هتشتري بيه؟');
 chatOpened = true;
 }
 
@@ -676,11 +717,6 @@ openBtn.classList.remove('hidden');
 postToParent('chatClosed');
 inp.blur();
 setTimeout(()=> openBtn.focus(), 200);
-
-// إعادة إظهار المحتوى العادي
-area.style.display = 'flex';
-document.querySelector('.controls').style.display = 'flex';
-blockedNotice.classList.remove('show');
 }
 
 async function sendToWorker(payload){
@@ -697,6 +733,8 @@ throw e;
 }
 
 async function sendMessage(isFinal = false){
+if(isBlocked) return;
+
 const txtRaw = inp.value.trim();
 if(!txtRaw || finalized) return;
 
@@ -705,14 +743,13 @@ const digits = isPhone(txtRaw);
 if(!digits){
 append('user', txtRaw);
 inp.value = '';
-append('bot', 'الرقم ده مش واضح — اكتب رقمك من غير مسافات أو أحرف ولازم بالإنجليزي (مثال: 01012345678)');
+append('bot', 'الرقم ده مش واضح — اكتب رقمك من غير مسافات أو أحرف (مثال: 01012345678)');
 return;
 }
-
 customerPhone = digits;
 append('user', txtRaw);
 inp.value = '';
-append('bot', `تمام، خدنا رقمك: ${customerPhone}. ممكن تقول اسمك علشان نكتبه في التقرير؟`);
+append('bot', `تمام، خدنا رقمك: ${customerPhone}. ممكن تقول اسمك علشان نكتب في التقرير؟`);
 return;
 }
 
@@ -725,11 +762,10 @@ inp.value = '';
 append('bot', `تمام، اتحدثنا والرقم اتحدث لـ: ${customerPhone}. ممكن دلوقتي تقول اسمك؟`);
 return;
 }
-
 customerName = txtRaw.slice(0,80);
 append('user', txtRaw);
 inp.value = '';
-append('bot', `جميل يا ${customerName} — احنا جاهزين نتابع. قولي تحب الخصم يبقى كام `);
+append('bot', `جميل يا ${customerName} — احنا جاهزين نتابع. قولي تحب الخصم يبقى كام أو اسألني عن العروض`);
 return;
 }
 
@@ -751,7 +787,6 @@ const payload = {
 messages: historyMessages.concat([{role:'user', content: txtRaw}]),
 last_official_discount: lastDiscountPercent !== null ? lastDiscountPercent : null
 };
-
 const res = await sendToWorker(payload);
 typing.remove();
 
@@ -774,9 +809,7 @@ startTimer();
 }
 }
 }catch(e){
-try{
-typing.remove();
-}catch(_){}
+try{ typing.remove(); }catch(_){}
 append('bot', 'النت فاصل ولا إيه؟ 😅');
 } finally {
 btn.disabled = false;
@@ -784,24 +817,10 @@ inp.disabled = false;
 }
 }
 
-// تحديث حالة الزر بناءً على الحظر
-function updateButtonState() {
-const daysLeft = checkIfBlocked();
-if (daysLeft) {
-openBtn.classList.add('disabled');
-openBtn.textContent = `انتظر (${daysLeft} يوم)`;
-openBtn.style.pointerEvents = 'none';
-isBlocked = true;
-} else {
-openBtn.classList.remove('disabled');
-openBtn.textContent = 'فصال';
-openBtn.style.pointerEvents = 'auto';
-isBlocked = false;
+// التحقق من المنع عند التحميل
+if(checkCooldown()){
+updateFabAppearance();
 }
-}
-
-// التحقق عند التحميل
-updateButtonState();
 
 openBtn.addEventListener('click', openChat);
 closeBtn.addEventListener('click', closeChat);
@@ -841,10 +860,23 @@ window.__KAWKAB_CHAT = {
 open: openChat,
 close: closeChat,
 sendMessageText: (t)=>{
+if(!isBlocked){
 inp.value = t;
 sendMessage();
 }
+},
+clearCooldown: ()=>{
+try{
+localStorage.removeItem(STORAGE_KEY);
+isBlocked = false;
+updateFabAppearance();
+return true;
+}catch(e){
+return false;
+}
+}
 };
+
 })();
 </script>
 </body>
