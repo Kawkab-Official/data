@@ -387,12 +387,20 @@ const timerContainer = document.getElementById('timerContainer');
 const timerDisplay = document.getElementById('timerDisplay');
 
 const WORKER_URL = 'https://kawkab.kawkab-arabia.workers.dev/';
+// رابط نقطة الإشعار (ضع هنا رابط وركر/سيرفر آمن خاص بيك يعبي رسالة تيليجرام)
+const TELEGRAM_NOTIFY_URL = 'https://kawkab2telegram.kawkab-arabia.workers.dev/'; // <-- غيّره للرابط حقك
+// مفتاح سري اختياري لتأمين طلبات الإشعار (يُرسَل في هيدر 'X-Notify-Secret')
+const NOTIFY_SECRET = '{hgjffhh54321}'; // <-- ضع هنا قيمة آمنة في وركرك
 
 let historyMessages = [], chatOpened = false, finalized = false;
 let timerInterval = null;
 let timeRemaining = 60;
 let timerStarted = false;
 let lastDiscountPercent = null; // متغير لحفظ آخر نسبة خصم تم ذكرها
+
+// بيانات الزبون اللي هنجمعها
+let customerPhone = null;
+let customerName = null;
 
 function postToParent(action){
 try{
@@ -414,10 +422,7 @@ area.scrollTop = area.scrollHeight;
 });
 }
 
-// وظيفة لاستخلاص نسبة الخصم من رسالة البوت
-// وظيفة لاستخلاص نسبة الخصم من رسالة البوت
 function extractDiscount(text){
-// يبحث عن نمط: عرض: رقم% (الأولوية للصيغة الرسمية)
 const match = text.match(/عرض:\s*(\d+)%/);
 if(match && match[1]){
 return parseInt(match[1], 10);
@@ -492,7 +497,26 @@ timerInterval = null;
 timerContainer.classList.remove('active');
 }
 
-function finalize(){
+async function sendNotify(payload){
+// تحذير أمني: إرسال مباشرة لتوكن تيليجرام من الكلاينت غير آمن.
+// الأفضل أن تضع وركر/سيرفر وسيط يستقبل هذا الطلب ويحتفظ بالتوكن ويبعث للتيليجرام.
+try{
+const res = await fetch(TELEGRAM_NOTIFY_URL, {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json',
+'X-Notify-Secret': NOTIFY_SECRET
+},
+body: JSON.stringify(payload)
+});
+return res.ok;
+}catch(e){
+console.error('notify error', e);
+return false;
+}
+}
+
+async function finalize(){
 if(finalized) return;
 finalized = true;
 stopTimer();
@@ -508,43 +532,43 @@ setTimeout(()=>{
 append('bot', finalDiscountText, true); // عرض النتيجة النهائية
 setTimeout(()=>{
 append('bot', '، شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊، اكمل عملية شراءك والخصم سوف يطبق عن طريق خدمة العملاء');
+
+// بعد ما نعرض النتيجة، نرسل الاشعار لقناة التيليجرام عبر endpoint آمن
+const notifyPayload = {
+phone: customerPhone || null,
+name: customerName || null,
+discount: finalDiscount,
+summary: `خصم نهائي ${finalDiscount}%` ,
+timestamp: new Date().toISOString()
+};
+
+sendNotify(notifyPayload).then(ok=>{
+if(!ok){
+append('bot', 'معلش، حصلت مشكلة في ارسال الاشعار للتيليجرام — شوف سجل السيرفر.');
+}
+});
+
 }, 1000);
 }, 500);
 }
 
-// تم الإبقاء على هذا لتمكين "Scroll into view" عند التركيز اليدوي
-inp.addEventListener('focus', ()=>{
-setTimeout(()=>{
-const controls = document.querySelector('.controls');
-if(controls){
-controls.scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-}, 300);
-});
-
-if(window.visualViewport){
-window.visualViewport.addEventListener('resize', ()=>{
-setTimeout(()=>{
-const controls = document.querySelector('.controls');
-if(controls){
-controls.scrollIntoView({behavior:'smooth', block:'end'});
-}
-}, 100);
-});
+function isPhone(txt){
+const digits = (txt||'').replace(/\D/g,'');
+return digits.length >= 8 && digits.length <= 15 ? digits : null;
 }
 
+// تم التعديل: عند فتح الشات نسأل أولاً عن رقم التليفون
 function openChat(){
 overlay.classList.add('show');
 overlay.setAttribute('aria-hidden', 'false');
 openBtn.classList.add('hidden');
 if(!chatOpened){
-append('bot', 'أهلاً بيك في كوكب بتاع الفصال! 🎉 قولّي تحب الخصم يبقى كام؟ 😎');
+append('bot', 'أهلاً بيك في كوكب بتاع الفصال! 🎉 ممكن في البداية تديني رقم التلفون اللي هتشتري بيه؟');
 chatOpened = true;
 }
 postToParent('chatOpened');
 setTimeout(()=>{
 scrollToBottom();
-// هنا تم إبقاء التركيز لفتح الكيبورد عند فتح الشات لأول مرة فقط
 inp.focus(); 
 }, 400);
 }
@@ -572,9 +596,48 @@ throw e;
 }
 
 async function sendMessage(isFinal = false){
-const txt = inp.value.trim();
-if(!txt || finalized) return;
-append('user', txt);
+const txtRaw = inp.value.trim();
+if(!txtRaw || finalized) return;
+
+// قبل أي حاجة، لو لسة ماخذناش رقم التليفون، ناخده كأول رد من المستخدم
+if(!customerPhone){
+const digits = isPhone(txtRaw);
+if(!digits){
+append('user', txtRaw);
+inp.value = '';
+append('bot', 'الرقم ده مش واضح — اكتب رقمك من غير مسافات أو أحرف (مثال: 01012345678)');
+return;
+}
+// خزن الرقم واطلب الاسم
+customerPhone = digits;
+append('user', txtRaw);
+inp.value = '';
+append('bot', `تمام، خدنا رقمك: ${customerPhone}. ممكن تقول اسمك علشان نكتب في التقرير؟`);
+return;
+}
+
+// لو عندنا رقم بس لسه ماخدناش اسم
+if(customerPhone && !customerName){
+// افترض إن الرسالة دي هي الاسم لو مش رقم
+const maybePhone = isPhone(txtRaw);
+if(maybePhone){
+// لو العميل ادّى رقم تاني، حدثه
+customerPhone = maybePhone;
+append('user', txtRaw);
+inp.value = '';
+append('bot', `تمام، اتحدثنا والرقم اتحدث لـ: ${customerPhone}. ممكن دلوقتي تقول اسمك؟`);
+return;
+}
+// خزن الاسم
+customerName = txtRaw.slice(0,80);
+append('user', txtRaw);
+inp.value = '';
+append('bot', `جميل يا ${customerName} — احنا جاهزين نتابع. قولي تحب الخصم يبقى كام أو اسألني عن العروض`);
+return;
+}
+
+// هنا التعامل الطبيعي مع الرسائل بعد أخذ رقم واسم
+append('user', txtRaw);
 inp.value = '';
 
 if(isFinal){
@@ -590,7 +653,7 @@ inp.blur(); // إزالة التركيز عند الإرسال لمنع فتح �
   try{
     // أرسل آخر خصم رسمي معروف للـ worker علشان يبني عليه
     const payload = {
-      messages: historyMessages.concat([{role:'user', content: txt}]),
+      messages: historyMessages.concat([{role:'user', content: txtRaw}]),
       last_official_discount: lastDiscountPercent !== null ? lastDiscountPercent : null
     };
 
@@ -602,28 +665,25 @@ inp.blur(); // إزالة التركيز عند الإرسال لمنع فتح �
       const j = await res.json().catch(()=> ({}));
       const reply = j.text || j.reply || 'مش فاهمك قوي 😅 جرب تاني';
 
-      // **هنا نحدث المتغير من الحقل الرسمي المرجع في الرد** (لو الوركر رجع واحد)
       if (typeof j.last_official_discount !== 'undefined' && j.last_official_discount !== null) {
         const parsed = Number(j.last_official_discount);
         if (!Number.isNaN(parsed)) lastDiscountPercent = Math.round(parsed);
       }
 
       append('bot', reply);
-      historyMessages.push({role:'user', content: txt}, {role:'assistant', content: reply});
+      historyMessages.push({role:'user', content: txtRaw}, {role:'assistant', content: reply});
 
-      // لو الموديل كتب "عرض: X%" داخل النص، فانكشن extractDiscount هيحدّث lastDiscountPercent تلقائياً لأن append يستدعيه.
       if(!timerStarted && historyMessages.length >= 2){
         startTimer();
       }
     }
   }catch(e){
 
-try{ typing.remove(); }catch(_){}
+try{ typing.remove(); }catch(_){ }
 append('bot', 'النت فاصل ولا إيه؟ 😅');
 } finally {
 btn.disabled = false;
 inp.disabled = false;
-// تم حذف inp.focus() هنا لمنع فتح الكيبورد تلقائيًا بعد رد البوت
 }
 }
 
