@@ -590,8 +590,8 @@ async function showTakeOfferChoice(finalDiscount) {
     <div class="result-title">🎉 مبروك! خصمك النهائي ${finalDiscount}%</div>
     <div style="margin-top:8px;font-weight:600">تحب تجرب محاولة تانية ولا تاخد العرض؟</div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-      <button id="k_try_again" style="padding:8px 14px;border-radius:12px;border:2px solid #e5e7eb;background:#fff;cursor:pointer">أجرب محاولة تانية</button>
-      <button id="k_take_offer" style="padding:8px 14px;border-radius:12px;border:none;background:linear-gradient(135deg,#2d2d2d,#1a1a1a);color:#fff;cursor:pointer">آخذ العرض</button>
+      <button id="k_try_again" style="padding:8px 14px;border-radius:12px;border:2px solid #e5e7eb;background:#fff;cursor:pointer">أجرب محاولة تانية 🔁</button>
+      <button id="k_take_offer" style="padding:8px 14px;border-radius:12px;border:none;background:linear-gradient(135deg,#2d2d2d,#1a1a1a);color:#fff;cursor:pointer">آخذ العرض 🎯</button>
     </div>
   `;
   area.appendChild(cont);
@@ -602,7 +602,6 @@ async function showTakeOfferChoice(finalDiscount) {
   return new Promise((resolve) => {
     document.getElementById('k_try_again').addEventListener('click', () => {
       cont.remove();
-      append('bot', 'تمام — هنجرب مرة تانية. قلّي تحب تبدأ منين؟');
       resolve('try');
     });
     document.getElementById('k_take_offer').addEventListener('click', () => {
@@ -621,7 +620,6 @@ async function finalizeEnhanced() {
   inp.disabled = true;
   quick.style.display = 'none';
 
-  // تحديد الخصم النهائي
   const finalDiscount = lastDiscountPercent !== null ? lastDiscountPercent : 5;
   const finalDiscountText = `${finalDiscount}%`;
 
@@ -629,64 +627,50 @@ async function finalizeEnhanced() {
     const choice = await showTakeOfferChoice(finalDiscount);
 
     if (choice === 'take') {
-      // سجل محليًا أن العميل أخذ العرض
       markAsTaken({ discount: finalDiscount, note: 'أخذ العرض من الواجهة' });
-
-      // عرض النتيجة النهائية
       append('bot', finalDiscountText, true);
       setTimeout(()=>{
-        append('bot', '، شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊، اكمل عملية شراءك والخصم سوف يطبق عن طريق خدمة العملاء');
+        append('bot', 'شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب جداً 🎊');
       }, 700);
 
-      // بعد العرض نرسل الاشعار لقناة التيليجرام
-      const notifyPayload = {
+      // إشعار تيليجرام
+      sendNotify({
         phone: customerPhone || null,
         name: customerName || null,
         discount: finalDiscount,
-        summary: `خصم نهائي ${finalDiscount}% (آخد العرض)`,
+        summary: `خصم نهائي ${finalDiscount}% (آخذ العرض)`,
         timestamp: new Date().toISOString(),
         client_id: getClientId()
-      };
-      sendNotify(notifyPayload).then(ok=>{
-        if(!ok){
-          append('bot', 'معلش، حصلت مشكلة في ارسال الاشعار للتيليجرام — شوف سجل السيرفر.');
-        }
       });
 
     } else if (choice === 'try') {
-      // لو أختر "جرب مرة تانية": نعيد تمكين الإدخال ونرجع العداد والأزرار شغالة
+      // إعادة محاولة كاملة
+      finalized = false;
       btn.disabled = false;
       inp.disabled = false;
       inp.focus();
-
-      // أعد إظهار أزرار الأسرع (quick)
       quick.style.display = '';
 
-      // اعد تهيئة العداد بحيث يبدأ من جديد
-      timerStarted = false; // بحيث يسمح startTimer بالعمل
-      stopTimer();
+      // تصفير وإعادة العداد
       timeRemaining = 60;
       timerDisplay.textContent = timeRemaining;
-      // إذا كانت الرسائل كفاية نعيد تشغيل العداد
-      if (historyMessages.length >= 2) {
-        startTimer();
-      }
+      timerStarted = false;
+      stopTimer();
+      startTimer();
 
-      finalized = false; // نسمح باستمرار المحادثة
+      // رسالة تحفيزية قبل البداية
+      append('bot', 'تمام! 🎯 هنبدأ محاولة جديدة — قولّي عايز توصل لخصم كام المرة دي؟');
     } else {
-      // لو choice === null (يعني سبق عرضه) أو أي حالة أخرى: عرض النتيجة وحفظ بشكل افتراضي
       append('bot', finalDiscountText, true);
       setTimeout(()=>{
-        append('bot', '، شكراً ليك! تم حفظ العرض وهنتواصل معاك قريب.');
+        append('bot', 'شكراً ليك! تم حفظ العرض.');
       }, 700);
-      // لا نسجل كـ "أخذ العرض" لو لم يؤكد المستخدم صراحة
     }
   } catch (e) {
     append('bot', finalDiscountText, true);
-    const notifyPayload = { phone: customerPhone || null, name: customerName || null, discount: finalDiscount, summary: `خصم نهائي ${finalDiscount}%`, timestamp: new Date().toISOString(), client_id: getClientId() };
-    sendNotify(notifyPayload);
   }
 }
+
 
 /* ===== دوال الشبكة ===== */
 async function sendToWorker(payload){
@@ -730,7 +714,7 @@ function stopTimer(){
 /* ===== التحقق من رقم الهاتف ===== */
 function isPhone(txt){
   const digits = (txt||'').replace(/\D/g,'');
-  return digits.length >= 8 && digits.length <= 15 ? digits : null;
+  return digits.length >= 10 && digits.length <= 13 ? digits : null;
 }
 
 /* ===== فتح الشات: تحقق حظر 14 يوم أولاً ===== */
@@ -761,7 +745,7 @@ function openChat(){
   overlay.setAttribute('aria-hidden', 'false');
   openBtn.classList.add('hidden');
   if(!chatOpened){
-    append('bot', 'أهلاً بيك في كوكب بتاع الفصال! 🎉 ممكن في البداية تديني رقم التلفون اللي هتشتري بيه؟');
+    append('bot', 'أهلاً بيك في كوكب بتاع الفصال! 🎉 ممكن في البداية تديني رقم التلفون -إنجليزي- اللي هتشتري بيه؟');
     chatOpened = true;
   }
   postToParent('chatOpened');
@@ -791,14 +775,14 @@ async function sendMessage(isFinal = false){
     if(!digits){
       append('user', txtRaw);
       inp.value = '';
-      append('bot', 'الرقم ده مش واضح — اكتب رقمك من غير مسافات أو أحرف (مثال: 01012345678)');
+      append('bot', 'الرقم ده مش واضح — اكتب رقمك من غير مسافات أو أحرف ولازم بالإنجليزي (مثال: 01012345678)');
       return;
     }
     // خزن الرقم واطلب الاسم
     customerPhone = digits;
     append('user', txtRaw);
     inp.value = '';
-    append('bot', `تمام، خدنا رقمك: ${customerPhone}. ممكن تقول اسمك علشان نكتب في التقرير؟`);
+    append('bot', `تمام، خدنا رقمك: ${customerPhone}. ممكن تقول اسمك علشان نكتبه في التقرير؟`);
     return;
   }
 
